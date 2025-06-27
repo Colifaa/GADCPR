@@ -2,13 +2,13 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuthStore } from '@/store/auth';
 import { useToast } from '@/hooks/use-toast';
-import { Eye, EyeOff, User, Mail, Lock, UserPlus } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
+import Link from 'next/link';
 
 interface RegisterData {
   fullName: string;
@@ -46,8 +46,6 @@ export function RegisterForm() {
 
   const handleInputChange = (field: keyof RegisterData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    
-    // Limpiar error del campo cuando el usuario empiece a escribir
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
     }
@@ -192,64 +190,46 @@ export function RegisterForm() {
   const passwordStrength = getPasswordStrength(formData.password);
 
   return (
-    <Card className="w-full">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl text-center">Crear cuenta</CardTitle>
-        <CardDescription className="text-center">
-          Completa la información para registrarte
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Nombre Completo */}
+    <div className="w-full max-w-md mx-auto">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+        <h1 className="text-2xl font-bold text-gray-900 text-center mb-8">Registrarse</h1>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Nombre */}
           <div className="space-y-2">
-            <Label htmlFor="fullName" className="flex items-center space-x-2">
-              <User className="h-4 w-4" />
-              <span>Nombre Completo</span>
+            <Label htmlFor="fullName" className="text-sm font-medium text-gray-600">
+              Nombre
             </Label>
             <Input
               id="fullName"
               type="text"
               value={formData.fullName}
               onChange={(e) => handleInputChange('fullName', e.target.value)}
-              placeholder="Tu nombre completo"
-              className={errors.fullName ? 'border-red-500' : ''}
+              placeholder="Nombre"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-blue-50"
               required
             />
-            {errors.fullName && (
-              <p className="text-sm text-red-600 dark:text-red-400">
-                {errors.fullName}
-              </p>
-            )}
           </div>
 
-          {/* Correo Electrónico */}
+          {/* Email */}
           <div className="space-y-2">
-            <Label htmlFor="email" className="flex items-center space-x-2">
-              <Mail className="h-4 w-4" />
-              <span>Correo Electrónico</span>
+            <Label htmlFor="email" className="text-sm font-medium text-gray-600">
+              E-mail
             </Label>
             <Input
               id="email"
               type="email"
               value={formData.email}
               onChange={(e) => handleInputChange('email', e.target.value)}
-              placeholder="tu@email.com"
-              className={errors.email ? 'border-red-500' : ''}
+              placeholder="E-mail"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-blue-50"
               required
             />
-            {errors.email && (
-              <p className="text-sm text-red-600 dark:text-red-400">
-                {errors.email}
-              </p>
-            )}
           </div>
 
-          {/* Nickname */}
+          {/* Nickname (opcional) */}
           <div className="space-y-2">
-            <Label htmlFor="nickname" className="flex items-center space-x-2">
-              <User className="h-4 w-4" />
-              <span>Nickname (Opcional)</span>
+            <Label htmlFor="nickname" className="text-sm font-medium text-gray-600">
+              Nickname (opcional)
             </Label>
             <Input
               id="nickname"
@@ -257,111 +237,55 @@ export function RegisterForm() {
               value={formData.nickname}
               onChange={(e) => handleInputChange('nickname', e.target.value)}
               placeholder="Tu nombre de usuario"
-              className={errors.nickname ? 'border-red-500' : ''}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-blue-50"
             />
-            {errors.nickname && (
-              <p className="text-sm text-red-600 dark:text-red-400">
-                {errors.nickname}
-              </p>
-            )}
           </div>
 
-          {/* Contraseña */}
+          {/* Password */}
           <div className="space-y-2">
-            <Label htmlFor="password" className="flex items-center space-x-2">
-              <Lock className="h-4 w-4" />
-              <span>Contraseña</span>
+            <Label htmlFor="password" className="text-sm font-medium text-gray-600">
+              Contraseña
             </Label>
             <div className="relative">
               <Input
                 id="password"
-                type={showPassword ? "text" : "password"}
+                type={showPassword ? 'text' : 'password'}
                 value={formData.password}
                 onChange={(e) => handleInputChange('password', e.target.value)}
-                placeholder="Tu contraseña segura"
-                className={errors.password ? 'border-red-500' : ''}
+                placeholder="Contraseña"
+                className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-blue-50"
                 required
               />
-              <Button
+              <button
                 type="button"
-                variant="ghost"
-                size="sm"
-                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                 onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
               >
-                {showPassword ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
-              </Button>
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
             </div>
-            
-            {/* Indicador de fortaleza de contraseña */}
-            {formData.password && (
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                    <div
-                      className={`h-2 rounded-full transition-all duration-300 ${passwordStrength.color}`}
-                      style={{ width: `${(passwordStrength.strength / 5) * 100}%` }}
-                    />
-                  </div>
-                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                    {passwordStrength.label}
-                  </span>
-                </div>
-              </div>
-            )}
-            
-            {errors.password && (
-              <p className="text-sm text-red-600 dark:text-red-400">
-                {errors.password}
-              </p>
-            )}
           </div>
 
           {/* Confirmar Contraseña */}
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword" className="flex items-center space-x-2">
-              <Lock className="h-4 w-4" />
-              <span>Confirmar Contraseña</span>
+            <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-600">
+              Confirmar Contraseña
             </Label>
-            <div className="relative">
-              <Input
-                id="confirmPassword"
-                type={showConfirmPassword ? "text" : "password"}
-                value={formData.confirmPassword}
-                onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                placeholder="Confirma tu contraseña"
-                className={errors.confirmPassword ? 'border-red-500' : ''}
-                required
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              >
-                {showConfirmPassword ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
-            {errors.confirmPassword && (
-              <p className="text-sm text-red-600 dark:text-red-400">
-                {errors.confirmPassword}
-              </p>
-            )}
+            <Input
+              id="confirmPassword"
+              type={showConfirmPassword ? 'text' : 'password'}
+              value={formData.confirmPassword}
+              onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+              placeholder="Confirma tu contraseña"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-blue-50"
+              required
+            />
           </div>
 
           {/* Botón de Registro */}
           <Button
             type="submit"
-            className="w-full"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 mt-8"
             disabled={isLoading}
           >
             {isLoading ? (
@@ -370,14 +294,24 @@ export function RegisterForm() {
                 Creando cuenta...
               </>
             ) : (
-              <>
-                <UserPlus className="h-4 w-4 mr-2" />
-                Crear cuenta
-              </>
+              'Crear Cuenta'
             )}
           </Button>
+
+          {/* Login Link */}
+          <div className="text-center mt-6">
+            <span className="text-sm text-gray-600">
+              ¿Ya tienes cuenta?{' '}
+              <Link
+                href="/auth/login"
+                className="text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200"
+              >
+                Iniciar Sesión
+              </Link>
+            </span>
+          </div>
         </form>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 } 

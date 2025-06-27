@@ -10,16 +10,17 @@ import { Badge } from '@/components/ui/badge';
 import { useAuthStore } from '@/store/auth';
 import { useToast } from '@/hooks/use-toast';
 import { toast as sonnerToast } from 'sonner';
-import { Camera, Save, Eye, EyeOff, Shield, Settings } from 'lucide-react';
+import { Camera, Save, Eye, EyeOff, Shield, Settings, User, Heart, Headphones } from 'lucide-react';
 
 interface ProfileData {
   name: string;
+  lastName: string;
   nickname: string;
   email: string;
+  phone: string;
+  document: string;
+  country: string;
   avatar: string;
-  currentPassword: string;
-  newPassword: string;
-  confirmPassword: string;
 }
 
 export function ProfileEditorAdmin() {
@@ -27,18 +28,19 @@ export function ProfileEditorAdmin() {
   const { toast } = useToast();
   
   const [profileData, setProfileData] = useState<ProfileData>({
-    name: user?.name || '',
-    nickname: user?.nickname || '',
+    name: user?.name?.split(' ')[0] || '',
+    lastName: user?.name?.split(' ').slice(1).join(' ') || '',
+    nickname: user?.nickname || 'Usuario',
     email: user?.email || '',
+    phone: user?.phone || '0000000000',
+    document: user?.document || '123456',
+    country: user?.country || 'Servicio',
     avatar: user?.avatar || '',
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: '',
   });
 
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('**********');
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [profileImagePreview, setProfileImagePreview] = useState<string>(user?.avatar || '');
 
@@ -79,83 +81,20 @@ export function ProfileEditorAdmin() {
     }
   };
 
-  const validateForm = (): boolean => {
-    // Validaciones básicas
-    if (!profileData.name.trim()) {
-      toast({
-        title: "Error",
-        description: "El nombre es obligatorio.",
-        variant: "destructive",
-      });
-      return false;
-    }
-
-    if (!profileData.email.trim()) {
-      toast({
-        title: "Error",
-        description: "El correo electrónico es obligatorio.",
-        variant: "destructive",
-      });
-      return false;
-    }
-
-    // Validar formato de email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(profileData.email)) {
-      toast({
-        title: "Error",
-        description: "Por favor ingresa un correo electrónico válido.",
-        variant: "destructive",
-      });
-      return false;
-    }
-
-    // Si se quiere cambiar la contraseña
-    if (profileData.newPassword || profileData.confirmPassword) {
-      if (!profileData.currentPassword) {
-        toast({
-          title: "Error",
-          description: "Debes ingresar tu contraseña actual para cambiarla.",
-          variant: "destructive",
-        });
-        return false;
-      }
-
-      if (profileData.newPassword.length < 6) {
-        toast({
-          title: "Error",
-          description: "La nueva contraseña debe tener al menos 6 caracteres.",
-          variant: "destructive",
-        });
-        return false;
-      }
-
-      if (profileData.newPassword !== profileData.confirmPassword) {
-        toast({
-          title: "Error",
-          description: "Las contraseñas no coinciden.",
-          variant: "destructive",
-        });
-        return false;
-      }
-    }
-
-    return true;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm()) return;
-
     setIsLoading(true);
     
     try {
       // Actualizar perfil
       const profileUpdateSuccess = await updateProfile({
-        name: profileData.name,
+        name: `${profileData.name} ${profileData.lastName}`.trim(),
         nickname: profileData.nickname,
         email: profileData.email,
+        phone: profileData.phone,
+        document: profileData.document,
+        country: profileData.country,
         avatar: profileData.avatar,
       });
 
@@ -163,40 +102,13 @@ export function ProfileEditorAdmin() {
         throw new Error('Error al actualizar el perfil');
       }
 
-      // Si hay cambio de contraseña
-      if (profileData.newPassword) {
-        const passwordChangeSuccess = await changePassword(
-          profileData.currentPassword,
-          profileData.newPassword
-        );
-
-        if (!passwordChangeSuccess) {
-          sonnerToast.error("Error al cambiar contraseña", {
-            description: "La contraseña actual es incorrecta. Verifica e inténtalo de nuevo.",
-          });
-          return;
-        }
-        
-        sonnerToast.success("¡Contraseña actualizada!", {
-          description: "Tu contraseña ha sido cambiada exitosamente.",
-        });
-      } else {
-        sonnerToast.success("¡Perfil de administrador actualizado!", {
-          description: "Tu información personal ha sido actualizada correctamente.",
-        });
-      }
-
-      // Limpiar campos de contraseña después de actualizar
-      setProfileData(prev => ({
-        ...prev,
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: '',
-      }));
+      sonnerToast.success("¡Perfil actualizado!", {
+        description: "Tu información ha sido actualizada correctamente.",
+      });
       
     } catch (error) {
       sonnerToast.error("Error al actualizar", {
-        description: error instanceof Error ? error.message : "Hubo un problema al actualizar tu perfil. Inténtalo de nuevo.",
+        description: error instanceof Error ? error.message : "Hubo un problema al actualizar tu perfil.",
       });
     } finally {
       setIsLoading(false);
@@ -213,235 +125,215 @@ export function ProfileEditorAdmin() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center space-x-3">
-        <Shield className="h-8 w-8 text-blue-600" />
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            Configuración del Perfil de Administrador
-          </h2>
-          <p className="text-gray-600 dark:text-gray-400">
-            Gestiona tu información personal y configuración de cuenta como administrador.
-          </p>
-        </div>
+    <div className="flex flex-col lg:flex-row gap-6 max-w-7xl mx-auto p-6">
+      {/* Sidebar izquierdo */}
+      <div className="lg:w-1/3">
+        <Card className="p-6">
+          {/* Avatar y info personal */}
+          <div className="flex flex-col items-center text-center mb-8">
+            <div className="relative mb-4">
+              <Avatar className="h-32 w-32 border-4 border-blue-100">
+                <AvatarImage src={profileImagePreview} alt="Foto de perfil" />
+                <AvatarFallback className="text-2xl bg-blue-900 text-white">
+                  {getInitials(user?.name || 'Admin')}
+                </AvatarFallback>
+              </Avatar>
+              <label htmlFor="profile-image" className="absolute bottom-0 right-0 bg-blue-600 rounded-full p-2 cursor-pointer hover:bg-blue-700 transition-colors">
+                <Camera className="h-4 w-4 text-white" />
+              </label>
+              <input
+                id="profile-image"
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+              />
+            </div>
+            
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-1">
+              {user?.name || 'Andre Carrera'}
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              Administrador
+            </p>
+          </div>
+        </Card>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Información Personal */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Settings className="h-5 w-5" />
-              <span>Información Personal</span>
-              <Badge variant="default" className="ml-2">
-                Administrador
-              </Badge>
-            </CardTitle>
-            <CardDescription>
-              Esta información será visible para otros administradores de la plataforma.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Foto de Perfil */}
-            <div className="flex items-center space-x-6">
-              <div className="relative">
-                <Avatar className="h-24 w-24">
-                  <AvatarImage src={profileImagePreview} alt="Foto de perfil" />
-                  <AvatarFallback className="text-lg">
-                    {getInitials(profileData.name || 'Admin')}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="absolute -bottom-1 -right-1 bg-blue-600 rounded-full p-1">
-                  <Shield className="h-3 w-3 text-white" />
-                </div>
-              </div>
+      {/* Contenido principal - Formulario */}
+      <div className="lg:w-2/3">
+        <Card className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+              Datos
+            </h3>
+            <Headphones className="h-6 w-6 text-blue-600" />
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Grid de campos */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Nombres */}
               <div className="space-y-2">
-                <Label htmlFor="profile-image" className="cursor-pointer">
-                  <div className="flex items-center space-x-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors border border-blue-200 dark:border-blue-800">
-                    <Camera className="h-4 w-4 text-blue-600" />
-                    <span className="text-blue-600 dark:text-blue-400">Cambiar foto</span>
-                  </div>
+                <Label htmlFor="name" className="text-gray-700 dark:text-gray-300">
+                  Nombres
                 </Label>
-                <input
-                  id="profile-image"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="hidden"
+                <Input
+                  id="name"
+                  type="text"
+                  value={profileData.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  placeholder="Nombre completo"
+                  className="bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800"
                 />
-                <p className="text-sm text-gray-500">
-                  JPG, PNG o GIF. Máximo 5MB.
-                </p>
+              </div>
+
+              {/* Apellido */}
+              <div className="space-y-2">
+                <Label htmlFor="lastName" className="text-gray-700 dark:text-gray-300">
+                  Apellido
+                </Label>
+                <Input
+                  id="lastName"
+                  type="text"
+                  value={profileData.lastName}
+                  onChange={(e) => handleInputChange('lastName', e.target.value)}
+                  placeholder="Apellido"
+                  className="bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800"
+                />
+              </div>
+
+              {/* Número de teléfono */}
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="text-gray-700 dark:text-gray-300">
+                  Número de teléfono
+                </Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  value={profileData.phone}
+                  onChange={(e) => handleInputChange('phone', e.target.value)}
+                  placeholder="0000000000"
+                  className="bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800"
+                />
+              </div>
+
+              {/* Correo */}
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-gray-700 dark:text-gray-300">
+                  Correo
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={profileData.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  placeholder="@gmail.com"
+                  className="bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800"
+                />
+              </div>
+
+              {/* Usuario */}
+              <div className="space-y-2">
+                <Label htmlFor="nickname" className="text-gray-700 dark:text-gray-300">
+                  Usuario
+                </Label>
+                <Input
+                  id="nickname"
+                  type="text"
+                  value={profileData.nickname}
+                  onChange={(e) => handleInputChange('nickname', e.target.value)}
+                  placeholder="Usuario"
+                  className="bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800"
+                />
+              </div>
+
+              {/* País */}
+              <div className="space-y-2">
+                <Label htmlFor="country" className="text-gray-700 dark:text-gray-300">
+                  País
+                </Label>
+                <Input
+                  id="country"
+                  type="text"
+                  value={profileData.country}
+                  onChange={(e) => handleInputChange('country', e.target.value)}
+                  placeholder="Servicio"
+                  className="bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800"
+                />
+              </div>
+
+              {/* Documento de identificación */}
+              <div className="space-y-2">
+                <Label htmlFor="document" className="text-gray-700 dark:text-gray-300">
+                  Documento de identificación
+                </Label>
+                <Input
+                  id="document"
+                  type="text"
+                  value={profileData.document}
+                  onChange={(e) => handleInputChange('document', e.target.value)}
+                  placeholder="123456"
+                  className="bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800"
+                />
+              </div>
+
+              {/* Contraseña */}
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-gray-700 dark:text-gray-300">
+                  Contraseña
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800 pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4 text-gray-500" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-gray-500" />
+                    )}
+                  </Button>
+                </div>
+                <button
+                  type="button"
+                  className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                >
+                  Cambiar contraseña
+                </button>
               </div>
             </div>
 
-            {/* Nombre Completo */}
-            <div className="space-y-2">
-              <Label htmlFor="name">Nombre Completo *</Label>
-              <Input
-                id="name"
-                type="text"
-                value={profileData.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
-                placeholder="Ingresa tu nombre completo"
-                required
-              />
+            {/* Botón Actualizar */}
+            <div className="flex justify-end pt-6">
+              <Button 
+                type="submit" 
+                disabled={isLoading}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2"
+              >
+                {isLoading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                    Guardando...
+                  </>
+                ) : (
+                  'Actualizar'
+                )}
+              </Button>
             </div>
-
-            {/* Nickname */}
-            <div className="space-y-2">
-              <Label htmlFor="nickname">Nickname o Alias de Admin</Label>
-              <Input
-                id="nickname"
-                type="text"
-                value={profileData.nickname}
-                onChange={(e) => handleInputChange('nickname', e.target.value)}
-                placeholder="Tu nombre de administrador o apodo"
-              />
-            </div>
-
-            {/* Email */}
-            <div className="space-y-2">
-              <Label htmlFor="email">Correo Electrónico Administrativo *</Label>
-              <Input
-                id="email"
-                type="email"
-                value={profileData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-                placeholder="admin@empresa.com"
-                required
-              />
-            </div>
-          </CardContent>
+          </form>
         </Card>
-
-        {/* Cambio de Contraseña */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Cambiar Contraseña</CardTitle>
-            <CardDescription>
-              Mantén tu cuenta segura actualizando tu contraseña regularmente. Deja estos campos vacíos si no deseas cambiar tu contraseña.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Contraseña Actual */}
-            <div className="space-y-2">
-              <Label htmlFor="current-password">Contraseña Actual</Label>
-              <div className="relative">
-                <Input
-                  id="current-password"
-                  type={showCurrentPassword ? "text" : "password"}
-                  value={profileData.currentPassword}
-                  onChange={(e) => handleInputChange('currentPassword', e.target.value)}
-                  placeholder="Ingresa tu contraseña actual"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                >
-                  {showCurrentPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-            </div>
-
-            {/* Nueva Contraseña */}
-            <div className="space-y-2">
-              <Label htmlFor="new-password">Nueva Contraseña</Label>
-              <div className="relative">
-                <Input
-                  id="new-password"
-                  type={showNewPassword ? "text" : "password"}
-                  value={profileData.newPassword}
-                  onChange={(e) => handleInputChange('newPassword', e.target.value)}
-                  placeholder="Ingresa tu nueva contraseña"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                  onClick={() => setShowNewPassword(!showNewPassword)}
-                >
-                  {showNewPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-            </div>
-
-            {/* Confirmar Contraseña */}
-            <div className="space-y-2">
-              <Label htmlFor="confirm-password">Confirmar Nueva Contraseña</Label>
-              <div className="relative">
-                <Input
-                  id="confirm-password"
-                  type={showConfirmPassword ? "text" : "password"}
-                  value={profileData.confirmPassword}
-                  onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                  placeholder="Confirma tu nueva contraseña"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                >
-                  {showConfirmPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Botones de Acción */}
-        <div className="flex justify-end space-x-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              setProfileData({
-                name: user?.name || '',
-                nickname: user?.nickname || '',
-                email: user?.email || '',
-                avatar: user?.avatar || '',
-                currentPassword: '',
-                newPassword: '',
-                confirmPassword: '',
-              });
-              setProfileImagePreview(user?.avatar || '');
-            }}
-          >
-            Cancelar
-          </Button>
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                Guardando...
-              </>
-            ) : (
-              <>
-                <Save className="h-4 w-4 mr-2" />
-                Guardar Cambios
-              </>
-            )}
-          </Button>
-        </div>
-      </form>
+      </div>
     </div>
   );
 } 

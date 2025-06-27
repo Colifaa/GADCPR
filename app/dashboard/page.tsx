@@ -12,23 +12,25 @@ import { useAuthStore } from '@/store/auth';
 export default function DashboardPage() {
   const router = useRouter();
   const { fetchDashboardData } = useDashboardStore();
-  const { user } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
 
   useEffect(() => {
-    // Si el usuario no está autenticado, redirigir al login
-    if (!user) {
+    if (!isAuthenticated) {
       router.push('/auth/login');
       return;
     }
-
-    // Si el usuario no ha completado el onboarding, redirigir
-    if (!user.hasCompletedOnboarding) {
+    if (user && !user.hasCompletedOnboarding) {
       router.push('/auth/onboarding');
       return;
     }
+    if (isAuthenticated) {
+      fetchDashboardData();
+    }
+  }, [fetchDashboardData, isAuthenticated, user, router]);
 
-    fetchDashboardData();
-  }, [fetchDashboardData, user, router]);
+  if (!isAuthenticated) {
+    return null; // o un spinner de carga
+  }
 
   return (
     <DashboardLayout>

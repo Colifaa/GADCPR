@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuthStore } from '@/store/auth';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import Link from 'next/link';
 
 export function LoginForm() {
   const [email, setEmail] = useState('');
@@ -15,7 +15,8 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  
+  const [rememberMe, setRememberMe] = useState(false);
+
   const { login } = useAuthStore();
   const router = useRouter();
 
@@ -29,7 +30,6 @@ export function LoginForm() {
       if (success) {
         // Obtener el usuario actualizado después del login
         const { user } = useAuthStore.getState();
-        
         // Verificar si el usuario ha completado el onboarding
         if (user && !user.hasCompletedOnboarding) {
           router.push('/auth/onboarding');
@@ -48,29 +48,31 @@ export function LoginForm() {
   };
 
   return (
-    <Card className="w-full max-w-md">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold">Bienvenido de nuevo</CardTitle>
-        <CardDescription>
-          Ingresa tus credenciales para acceder a tu cuenta
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="w-full max-w-md mx-auto">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+        <h1 className="text-2xl font-bold text-gray-900 text-center mb-8">¡Bienvenido!</h1>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Email/Username Field */}
           <div className="space-y-2">
-            <Label htmlFor="email">Correo electrónico</Label>
+            <Label htmlFor="email" className="text-sm font-medium text-gray-600">
+              Correo electrónico
+            </Label>
             <Input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="john@example.com"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
             />
           </div>
-          
+
+          {/* Password Field */}
           <div className="space-y-2">
-            <Label htmlFor="password">Contraseña</Label>
+            <Label htmlFor="password" className="text-sm font-medium text-gray-600">
+              Contraseña
+            </Label>
             <div className="relative">
               <Input
                 id="password"
@@ -78,31 +80,56 @@ export function LoginForm() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Ingresa tu contraseña"
+                className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
               />
-              <Button
+              <button
                 type="button"
-                variant="ghost"
-                size="sm"
-                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                 onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
               >
-                {showPassword ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
-              </Button>
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
             </div>
           </div>
 
+          {/* Forgot Password Link */}
+          <div className="text-left">
+            <Link
+              href="/forgot-password"
+              className="text-sm text-gray-600 hover:text-blue-600 transition-colors duration-200"
+            >
+              Olvidé contraseña
+            </Link>
+          </div>
+
+          {/* Remember Me Checkbox */}
+          <div className="flex items-center space-x-2">
+            <input
+              id="remember"
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="w-4 h-4 border-gray-300 rounded"
+            />
+            <Label htmlFor="remember" className="text-sm text-gray-600">
+              Recordarme
+            </Label>
+          </div>
+
+          {/* Error Message */}
           {error && (
             <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">
               {error}
             </div>
           )}
 
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          {/* Login Button */}
+          <Button
+            type="submit"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
+            disabled={isLoading}
+          >
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -112,25 +139,21 @@ export function LoginForm() {
               'Iniciar sesión'
             )}
           </Button>
-        </form>
 
-        <div className="mt-4 text-center space-y-2">
-          <p className="text-sm text-gray-600">
-            Credenciales de demostración: john@example.com / password123
-          </p>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setEmail('john@example.com');
-              setPassword('password123');
-            }}
-          >
-            Usar credenciales de demo
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+          {/* Create Account Link */}
+          <div className="text-center">
+            <span className="text-sm text-gray-600">
+              ¿No tienes cuenta?{' '}
+              <Link
+                href="/auth/register"
+                className="text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200"
+              >
+                Crear Cuenta
+              </Link>
+            </span>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }

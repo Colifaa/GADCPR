@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { Bell, User, LogOut, Search, FileText, FolderOpen, CheckCircle, AlertCircle, Info } from "lucide-react"
+import { Bell, User, LogOut, Search, FileText, FolderOpen, CheckCircle, AlertCircle, Info, Menu } from "lucide-react"
 import { useAuthStore } from '@/store/auth'
 import { Button } from "@/components/ui/button"
 import {
@@ -65,9 +65,15 @@ const getNotificationIcon = (type: string) => {
   }
 }
 
-export default function NavbarUser() {
-  const { user } = useAuthStore()
+interface NavbarUserProps {
+  sidebarOpen?: boolean;
+  toggleSidebar?: () => void;
+  isMobile?: boolean;
+}
+
+export default function NavbarUser({ sidebarOpen, toggleSidebar, isMobile }: NavbarUserProps) {
   const [unreadCount, setUnreadCount] = React.useState(notifications.filter((n) => !n.read).length)
+  const { user, logout } = useAuthStore()
 
   const handleMarkAsRead = (id: number) => {
     // In a real app, this would update the backend
@@ -78,43 +84,62 @@ export default function NavbarUser() {
     }
   }
 
+  const handleLogout = () => {
+    logout()
+  }
+
   return (
-    <nav className="border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-      <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        <div className="flex h-16 items-center">
-          {/* Logo */}
-          <div className="flex items-center mr-8">
-            <Link href="/" className="flex items-center space-x-2">
-                <Image src="/logo_scrito.svg" alt="Logo" width={128} height={128} />
+    <nav className="border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:bg-gray-900/95 dark:supports-[backdrop-filter]:bg-gray-900/60 sticky top-0 z-30">
+      <div className="mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 items-center justify-between">
+          {/* Left side - Logo y Toggle Sidebar */}
+          <div className="flex items-center space-x-4">
+            {/* Sidebar Toggle solo para móvil */}
+            {toggleSidebar && isMobile && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleSidebar}
+                className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100"
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+            )}
+            
+            <Link href="/dashboard" className="flex items-center space-x-2 flex-shrink-0">
+              <Image src="/logo_scrito.svg" alt="Logo" width={120} height={120} />
             </Link>
           </div>
 
-          {/* Navigation Links - Centered */}
-          <div className="hidden md:flex flex-1 justify-center">
-            <div className="flex items-baseline space-x-8">
+          {/* Navigation Links - Para pantallas grandes, distribuidos mejor */}
+          <div className="hidden lg:flex items-center justify-center flex-1 px-8">
+            <div className="flex items-center space-x-6 xl:space-x-8 2xl:space-x-12">
               <Link
-                href="/seleccion"
-                className="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors duration-200 hover:bg-gray-50 rounded-md"
+                href="/content"
+                className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100 px-4 py-2 text-sm font-medium transition-colors duration-200 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-md flex items-center space-x-2"
               >
-                Selección
+                <FileText className="h-4 w-4" />
+                <span>Contenido</span>
               </Link>
               <Link
-                href="/historial"
-                className="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors duration-200 hover:bg-gray-50 rounded-md"
+                href="/analytics"
+                className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100 px-4 py-2 text-sm font-medium transition-colors duration-200 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-md flex items-center space-x-2"
               >
-                Historial
+                <Search className="h-4 w-4" />
+                <span>Análisis</span>
               </Link>
               <Link
-                href="/proyectos"
-                className="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors duration-200 hover:bg-gray-50 rounded-md"
+                href="/dashboard"
+                className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100 px-4 py-2 text-sm font-medium transition-colors duration-200 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-md flex items-center space-x-2"
               >
-                Mis proyectos
+                <FolderOpen className="h-4 w-4" />
+                <span>Dashboard</span>
               </Link>
             </div>
           </div>
 
-          {/* Right side - Notifications, User, Exit */}
-          <div className="flex items-center space-x-4 ml-8">
+          {/* Right side - Notificaciones, Perfil, Logout */}
+          <div className="flex items-center space-x-3 flex-shrink-0">
             {/* Notifications Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -151,7 +176,7 @@ export default function NavbarUser() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
                           <p
-                            className={`text-sm font-medium ${!notification.read ? "text-gray-900" : "text-gray-600"}`}
+                            className={`text-sm font-medium ${!notification.read ? "text-gray-900 dark:text-gray-100" : "text-gray-600 dark:text-gray-400"}`}
                           >
                             {notification.title}
                           </p>
@@ -159,14 +184,14 @@ export default function NavbarUser() {
                             <div className="h-2 w-2 bg-blue-500 rounded-full flex-shrink-0 ml-2"></div>
                           )}
                         </div>
-                        <p className="text-sm text-gray-500 mt-1">{notification.message}</p>
-                        <p className="text-xs text-gray-400 mt-1">{notification.time}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{notification.message}</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{notification.time}</p>
                       </div>
                     </DropdownMenuItem>
                   ))}
                 </div>
                 {notifications.length === 0 && (
-                  <div className="p-4 text-center text-gray-500 text-sm">No hay notificaciones</div>
+                  <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">No hay notificaciones</div>
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
@@ -176,7 +201,7 @@ export default function NavbarUser() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="relative">
                   <Avatar className="h-7 w-7">
-                    <AvatarImage src={user?.avatar} alt={user?.name || "Usuario"} />
+                    <AvatarImage src={user?.avatar || user?.avatar} alt={user?.name || "Usuario"} />
                     <AvatarFallback>
                       {user?.name ? user.name.charAt(0).toUpperCase() : <User className="h-4 w-4" />}
                     </AvatarFallback>
@@ -188,61 +213,28 @@ export default function NavbarUser() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <Link href="/dashboard/profile">
-                    <User className="mr-2 h-4 w-4" />
-                    <span>Mi Perfil</span>
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Mi Perfil</span>
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <FolderOpen className="mr-2 h-4 w-4" />
-                  <span>Mis proyectos</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <FileText className="mr-2 h-4 w-4" />
-                  <span>Documentos</span>
-                </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-red-600">
+                <DropdownMenuItem className="text-red-600 dark:text-red-400" onClick={handleLogout}>
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Cerrar sesión</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Exit Link */}
-            <Link
-              href="/logout"
-              className="flex items-center space-x-1 text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors duration-200 hover:bg-gray-50 rounded-md"
+            {/* Separate Logout Button - Oculto en móvil */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLogout}
+              className="hidden sm:flex text-gray-600 hover:text-red-600 dark:text-gray-300 dark:hover:text-red-400 px-3 py-2 text-sm font-medium transition-colors duration-200 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md"
             >
-              <span>Salir</span>
+              <span className="hidden lg:inline mr-1">Salir</span>
               <LogOut className="h-4 w-4" />
-            </Link>
-
-            {/* Mobile menu button */}
-            <div className="md:hidden">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm">
-                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                    </svg>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem>
-                    <Search className="mr-2 h-4 w-4" />
-                    <span>Selección</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <FileText className="mr-2 h-4 w-4" />
-                    <span>Historial</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <FolderOpen className="mr-2 h-4 w-4" />
-                    <span>Mis proyectos</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+            </Button>
           </div>
         </div>
       </div>

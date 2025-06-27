@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { useAuthStore } from '@/store/auth';
 import { useToast } from '@/hooks/use-toast';
+import { toast as sonnerToast } from 'sonner';
 import { Camera, Save, Eye, EyeOff } from 'lucide-react';
 
 interface ProfileData {
@@ -170,14 +171,22 @@ export function ProfileEditor() {
         );
 
         if (!passwordChangeSuccess) {
-          throw new Error('Error al cambiar la contraseña');
+          sonnerToast.error("Error al cambiar contraseña", {
+            description: "La contraseña actual es incorrecta. Verifica e inténtalo de nuevo.",
+          });
+          return; // Salir sin limpiar los campos para que el usuario pueda intentar de nuevo
         }
+        
+        // Toast específico para cambio de contraseña exitoso usando Sonner
+        sonnerToast.success("¡Contraseña actualizada!", {
+          description: "Tu contraseña ha sido cambiada exitosamente.",
+        });
+      } else {
+        // Toast para actualización de perfil sin cambio de contraseña usando Sonner
+        sonnerToast.success("¡Perfil actualizado!", {
+          description: "Tu información personal ha sido actualizada correctamente.",
+        });
       }
-      
-      toast({
-        title: "¡Éxito!",
-        description: "Tu perfil ha sido actualizado correctamente.",
-      });
 
       // Limpiar campos de contraseña después de actualizar
       setProfileData(prev => ({
@@ -188,10 +197,8 @@ export function ProfileEditor() {
       }));
       
     } catch (error) {
-      toast({
-        title: "Error",
+      sonnerToast.error("Error al actualizar", {
         description: error instanceof Error ? error.message : "Hubo un problema al actualizar tu perfil. Inténtalo de nuevo.",
-        variant: "destructive",
       });
     } finally {
       setIsLoading(false);

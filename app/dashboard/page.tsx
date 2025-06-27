@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { StatsCards } from '@/components/dashboard/StatsCards';
 import { ContentGenerator } from '@/components/dashboard/ContentGenerator';
@@ -9,12 +10,25 @@ import { useDashboardStore } from '@/store/dashboard';
 import { useAuthStore } from '@/store/auth';
 
 export default function DashboardPage() {
+  const router = useRouter();
   const { fetchDashboardData } = useDashboardStore();
   const { user } = useAuthStore();
 
   useEffect(() => {
+    // Si el usuario no está autenticado, redirigir al login
+    if (!user) {
+      router.push('/auth/login');
+      return;
+    }
+
+    // Si el usuario no ha completado el onboarding, redirigir
+    if (!user.hasCompletedOnboarding) {
+      router.push('/auth/onboarding');
+      return;
+    }
+
     fetchDashboardData();
-  }, [fetchDashboardData]);
+  }, [fetchDashboardData, user, router]);
 
   return (
     <DashboardLayout>

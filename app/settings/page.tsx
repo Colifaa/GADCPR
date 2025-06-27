@@ -11,11 +11,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuthStore } from '@/store/auth';
 import { useSettingsStore } from '@/store/settings';
-import { User, Bell, Palette, Zap, Save } from 'lucide-react';
+import { User, Bell, Palette, Zap, Save, Settings2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { PreferencesSetup, UserPreferences } from '@/components/auth/PreferencesSetup';
 
 export default function SettingsPage() {
-  const { user, updateUser } = useAuthStore();
+  const { user, updateUser, updateUserPreferences } = useAuthStore();
   const { 
     theme, 
     notifications, 
@@ -24,6 +25,9 @@ export default function SettingsPage() {
     updateNotifications, 
     updateGeneration 
   } = useSettingsStore();
+
+  const [showPreferencesModal, setShowPreferencesModal] = React.useState(false);
+  const [isUpdatingPreferences, setIsUpdatingPreferences] = React.useState(false);
 
   const handleSaveProfile = () => {
     toast.success('Profile settings saved!');
@@ -35,6 +39,24 @@ export default function SettingsPage() {
 
   const handleSaveGeneration = () => {
     toast.success('Generation settings saved!');
+  };
+
+  const handleUpdatePreferences = async (preferences: UserPreferences) => {
+    setIsUpdatingPreferences(true);
+    try {
+      const success = await updateUserPreferences(preferences);
+      if (success) {
+        toast.success('Preferencias de contenido actualizadas correctamente');
+        setShowPreferencesModal(false);
+      } else {
+        toast.error('Error al actualizar las preferencias');
+      }
+    } catch (error) {
+      console.error('Error updating preferences:', error);
+      toast.error('Error al actualizar las preferencias');
+    } finally {
+      setIsUpdatingPreferences(false);
+    }
   };
 
   return (
@@ -291,6 +313,112 @@ export default function SettingsPage() {
             </Button>
           </CardContent>
         </Card>
+
+        {/* Content Preferences */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Settings2 className="h-5 w-5" />
+              <span>Preferencias de Contenido</span>
+            </CardTitle>
+            <CardDescription>
+              Configura tus temas de interés, estilo de contenido y audiencia objetivo
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {user?.preferences ? (
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-sm font-medium">Temas de Interés</Label>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {user.preferences.interestTopics.map((topic) => (
+                      <span 
+                        key={topic} 
+                        className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm"
+                      >
+                        {topic.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium">Formatos de Contenido</Label>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {user.preferences.contentFormat.map((format) => (
+                      <span 
+                        key={format} 
+                        className="px-3 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded-full text-sm"
+                      >
+                        {format.charAt(0).toUpperCase() + format.slice(1)}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label className="text-sm font-medium">Tono</Label>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      {user.preferences.tone.charAt(0).toUpperCase() + user.preferences.tone.slice(1)}
+                    </p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Frecuencia</Label>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      {user.preferences.frequency.charAt(0).toUpperCase() + user.preferences.frequency.slice(1)}
+                    </p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Audiencia</Label>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      {user.preferences.targetAudience.length} segmento(s)
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <Settings2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                  Sin preferencias configuradas
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  Configura tus preferencias para personalizar la generación de contenido
+                </p>
+              </div>
+            )}
+
+            <Button onClick={() => setShowPreferencesModal(true)}>
+              <Settings2 className="mr-2 h-4 w-4" />
+              {user?.preferences ? 'Actualizar Preferencias' : 'Configurar Preferencias'}
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Modal de Preferencias */}
+        {showPreferencesModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="bg-white dark:bg-gray-900 rounded-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-2xl font-bold">Configurar Preferencias</h2>
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => setShowPreferencesModal(false)}
+                    disabled={isUpdatingPreferences}
+                  >
+                    ✕
+                  </Button>
+                </div>
+                <PreferencesSetup 
+                  onComplete={handleUpdatePreferences}
+                  isLoading={isUpdatingPreferences}
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );

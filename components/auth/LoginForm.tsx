@@ -27,7 +27,15 @@ export function LoginForm() {
     try {
       const success = await login(email, password);
       if (success) {
-        router.push('/dashboard');
+        // Obtener el usuario actualizado después del login
+        const { user } = useAuthStore.getState();
+        
+        // Verificar si el usuario ha completado el onboarding
+        if (user && !user.hasCompletedOnboarding) {
+          router.push('/auth/onboarding');
+        } else {
+          router.push('/dashboard');
+        }
       } else {
         setError('Credenciales incorrectas. Por favor, verifica tu email y contraseña.');
       }

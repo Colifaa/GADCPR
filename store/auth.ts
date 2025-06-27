@@ -1,6 +1,15 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+// Importar las preferencias del usuario
+export interface UserPreferences {
+  interestTopics: string[];
+  contentFormat: string[];
+  tone: string;
+  frequency: string;
+  targetAudience: string[];
+}
+
 interface User {
   id: string;
   name: string;
@@ -9,6 +18,8 @@ interface User {
   nickname?: string;
   plan: 'free' | 'pro' | 'enterprise' | 'admin';
   credits: number;
+  preferences?: UserPreferences;
+  hasCompletedOnboarding?: boolean;
 }
 
 interface AuthState {
@@ -20,6 +31,8 @@ interface AuthState {
   updateUser: (updates: Partial<User>) => void;
   updateProfile: (updates: Partial<User>) => Promise<boolean>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<boolean>;
+  updateUserPreferences: (preferences: UserPreferences) => Promise<boolean>;
+  completeOnboarding: () => Promise<boolean>;
   initializeDefaultUsers: () => void;
 }
 
@@ -226,6 +239,50 @@ export const useAuthStore = create<AuthState>()(
             console.log('❌ Contraseña actual incorrecta');
             return false;
           }
+        } else {
+          console.log('❌ Usuario no autenticado');
+          return false;
+        }
+      },
+
+      updateUserPreferences: async (preferences: UserPreferences) => {
+        const currentUser = get().user;
+        if (currentUser) {
+          const updatedUser = { ...currentUser, preferences };
+          set({ user: updatedUser });
+          
+          // También actualizar en la base de datos local
+          const users = getLocalUsers();
+          const userIndex = users.findIndex((u: any) => u.id === currentUser.id);
+          if (userIndex !== -1) {
+            users[userIndex] = { ...users[userIndex], preferences };
+            saveLocalUsers(users);
+          }
+          
+          console.log('✅ Preferencias actualizadas');
+          return true;
+        } else {
+          console.log('❌ Usuario no autenticado');
+          return false;
+        }
+      },
+
+      completeOnboarding: async () => {
+        const currentUser = get().user;
+        if (currentUser) {
+          const updatedUser = { ...currentUser, hasCompletedOnboarding: true };
+          set({ user: updatedUser });
+          
+          // También actualizar en la base de datos local
+          const users = getLocalUsers();
+          const userIndex = users.findIndex((u: any) => u.id === currentUser.id);
+          if (userIndex !== -1) {
+            users[userIndex] = { ...users[userIndex], hasCompletedOnboarding: true };
+            saveLocalUsers(users);
+          }
+          
+          console.log('✅ Onboarding completado');
+          return true;
         } else {
           console.log('❌ Usuario no autenticado');
           return false;

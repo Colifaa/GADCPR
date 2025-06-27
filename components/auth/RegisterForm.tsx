@@ -157,7 +157,7 @@ export function RegisterForm() {
           title: "¡Registro exitoso!",
           description: "Tu cuenta ha sido creada correctamente.",
         });
-        router.push('/dashboard');
+        router.push('/auth/onboarding');
       } else {
         toast({
           title: "Error en el registro",

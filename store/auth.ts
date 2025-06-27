@@ -169,7 +169,7 @@ export const useAuthStore = create<AuthState>()(
           email,
           password, // ¡IMPORTANTE: Guardar la contraseña!
           nickname,
-          plan: role === 'admin' ? 'admin' : 'free',
+          plan: (role === 'admin' ? 'admin' : 'free') as 'free' | 'pro' | 'enterprise' | 'admin',
           role: role || 'user',
           credits: 50
         };

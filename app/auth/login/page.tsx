@@ -23,7 +23,7 @@ export default function LoginPage() {
       {/* Left Side - Image */}
       <div className="hidden lg:flex lg:w-1/3 relative min-h-screen">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-blue-800 opacity-10 z-10"></div>
-        <Image src="/img/login/login.png" alt="Login background" fill className="" />
+        <Image src="/images/login/login.png" alt="Login background" fill className="" />
       </div>
 
       {/* Right Side - Navbar + Login Form */}

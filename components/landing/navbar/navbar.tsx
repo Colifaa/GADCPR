@@ -11,7 +11,7 @@ export default function Navbar() {
         {/* Logo a la izquierda */}
         <div className="flex items-center flex-shrink-0">
           <Link href="/">
-            <Image src="/img/landing/logo/logo.png" alt="Logo" width={100} height={100} className="h-12 w-auto" />
+            <Image src="/images/landing/logo/logo.png" alt="Logo" width={100} height={100} className="h-12 w-auto" />
           </Link>
         </div>
 

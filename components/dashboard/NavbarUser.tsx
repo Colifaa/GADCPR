@@ -93,7 +93,7 @@ export default function NavbarUser() {
           <div className="hidden md:flex flex-1 justify-center">
             <div className="flex items-baseline space-x-8">
               <Link
-                href="/seleccion"
+                href="/selecciones"
                 className="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors duration-200 hover:bg-gray-50 rounded-md"
               >
                 Selección

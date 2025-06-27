@@ -19,7 +19,8 @@ import {
   Moon,
   Monitor,
   Sparkles,
-  Shield
+  Shield,
+  User
 } from 'lucide-react';
 
 const navigation = [
@@ -27,6 +28,7 @@ const navigation = [
   { name: 'Contenido', href: '/content', icon: FileText },
   { name: 'Análisis', href: '/analytics', icon: BarChart3 },
   { name: 'Facturación', href: '/billing', icon: CreditCard },
+  { name: 'Mi Perfil', href: '/dashboard/profile', icon: User },
   { name: 'Configuración', href: '/settings', icon: Settings },
 ];
 
@@ -136,7 +138,7 @@ export function Sidebar() {
       {/* User section */}
       <div className="p-4 border-t border-gray-200 dark:border-gray-700">
         {user && (
-          <div className="flex items-center space-x-3 mb-4">
+          <Link href="/dashboard/profile" className="flex items-center space-x-3 mb-4 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
             <Avatar>
               <AvatarImage src={user.avatar} alt={user.name} />
               <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
@@ -153,8 +155,11 @@ export function Sidebar() {
                   </span>
                 )}
               </p>
+              <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                Ver perfil →
+              </p>
             </div>
-          </div>
+          </Link>
         )}
         
         <div className="flex space-x-2">

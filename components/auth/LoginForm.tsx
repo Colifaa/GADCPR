@@ -10,8 +10,8 @@ import { useAuthStore } from '@/store/auth';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 
 export function LoginForm() {
-  const [email, setEmail] = useState('john@example.com');
-  const [password, setPassword] = useState('password123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -29,9 +29,10 @@ export function LoginForm() {
       if (success) {
         router.push('/dashboard');
       } else {
-        setError('Correo electrónico o contraseña inválidos');
+        setError('Credenciales incorrectas. Por favor, verifica tu email y contraseña.');
       }
     } catch (err) {
+      console.error('Error en login:', err);
       setError('Ha ocurrido un error. Por favor, inténtalo de nuevo.');
     } finally {
       setIsLoading(false);
@@ -105,10 +106,21 @@ export function LoginForm() {
           </Button>
         </form>
 
-        <div className="mt-4 text-center">
+        <div className="mt-4 text-center space-y-2">
           <p className="text-sm text-gray-600">
             Credenciales de demostración: john@example.com / password123
           </p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setEmail('john@example.com');
+              setPassword('password123');
+            }}
+          >
+            Usar credenciales de demo
+          </Button>
         </div>
       </CardContent>
     </Card>

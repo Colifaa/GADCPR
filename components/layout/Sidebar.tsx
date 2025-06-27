@@ -15,7 +15,9 @@ import {
   Settings,
   LogOut,
   Sparkles,
-  Shield
+  Shield,
+  User,
+  X
 } from 'lucide-react';
 import Image from 'next/image';
 
@@ -32,7 +34,13 @@ const adminNavigation = [
   { name: 'Panel de Administración', href: '/admin', icon: Shield },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  sidebarOpen?: boolean;
+  toggleSidebar?: () => void;
+  isMobile?: boolean;
+}
+
+export function Sidebar({ sidebarOpen, toggleSidebar, isMobile }: SidebarProps) {
   const pathname = usePathname();
   const { user, logout } = useAuthStore();
 
@@ -44,7 +52,28 @@ export function Sidebar() {
   };
 
   return (
-    <div className="flex h-full w-64 flex-col bg-white border-r border-gray-200">
+    <div className={`
+      flex h-full flex-col bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700
+      ${isMobile ? 'w-64' : 'w-64'}
+      transition-all duration-300 ease-in-out
+    `}>
+      {/* Header con botón de cerrar en móvil */}
+      {isMobile && (
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+          <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">Menú</span>
+          {toggleSidebar && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleSidebar}
+              className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100"
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          )}
+        </div>
+      )}
+
       {/* User Profile Section */}
       <div className="flex h-20 items-center px-6 border-b border-gray-200">
         {user ? (
@@ -87,9 +116,15 @@ export function Sidebar() {
               className={cn(
                 'flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors',
                 isActive
-                  ? 'bg-blue-50 text-blue-700'
-                  : 'text-gray-700 hover:bg-gray-100'
+                  ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
+                  : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
               )}
+              onClick={() => {
+                // Cerrar sidebar en móvil al hacer clic en un enlace
+                if (isMobile && toggleSidebar) {
+                  toggleSidebar();
+                }
+              }}
             >
               <item.icon className="mr-3 h-5 w-5" />
               {item.name}
@@ -115,9 +150,15 @@ export function Sidebar() {
                   className={cn(
                     'flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors',
                     isActive
-                      ? 'bg-red-50 text-red-700'
-                      : 'text-gray-700 hover:bg-gray-100'
+                      ? 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400'
+                      : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
                   )}
+                  onClick={() => {
+                    // Cerrar sidebar en móvil al hacer clic en un enlace
+                    if (isMobile && toggleSidebar) {
+                      toggleSidebar();
+                    }
+                  }}
                 >
                   <item.icon className="mr-3 h-5 w-5" />
                   {item.name}

@@ -1,461 +1,296 @@
 'use client';
 
-import React, { useState } from 'react';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useEffect, useState } from 'react';
+import { DashboardAdminLayout } from '@/components/layout/DashboardAdminLayout';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAdminStore } from '@/store/admin';
-import { 
-  Users, 
-  FileText, 
-  CreditCard, 
-  Settings, 
-  BarChart3, 
-  Shield,
-  Search,
-  Filter,
-  Edit,
-  Trash2,
-  Eye,
-  Ban,
-  CheckCircle,
-  AlertTriangle,
-  TrendingUp,
-  DollarSign
-} from 'lucide-react';
-import { format } from 'date-fns';
+import { useMetricsStore } from '@/store/metrics';
+import { useReportsStore, Report, ReportFormat } from '@/store/reports';
+import { BarChart3, Globe, FileText, Users } from 'lucide-react';
+
+// Importar los componentes modulares
+import { SystemStatsCards } from '@/components/dashboard-admin/SystemStatsCards';
+import { WebUsageChart } from '@/components/dashboard-admin/WebUsageChart';
+import { UserViewsChart } from '@/components/dashboard-admin/UserViewsChart';
+import { ContentAnalysisCards } from '@/components/dashboard-admin/ContentAnalysisCards';
+import { UserAnalysisCharts } from '@/components/dashboard-admin/UserAnalysisCharts';
+import { ReportsSection } from '@/components/dashboard-admin/ReportsSection';
+import { ReportModals } from '@/components/dashboard-admin/ReportModals';
+
+interface ReportForm {
+  title: string;
+  type: Report['type'];
+  dateFrom: string;
+  dateTo: string;
+  dataImportance: Report['dataImportance'];
+  includeCharts: boolean;
+}
 
 export default function AdminPage() {
+  const { systemStats } = useAdminStore();
   const { 
-    users, 
-    content, 
-    transactions, 
-    systemStats,
-    updateUserStatus,
-    deleteUser,
-    deleteContent,
-    updateContentStatus
-  } = useAdminStore();
+    webUsage, 
+    userViews, 
+    trendingTopics, 
+    leastVisitedTopics, 
+    platformStats, 
+    recentUsers, 
+    userRetention, 
+    userActivity, 
+    fetchMetrics,
+    updateTimeRange 
+  } = useMetricsStore();
+  
+  const { 
+    reports, 
+    currentReport, 
+    isGenerating, 
+    generateReport, 
+    downloadReport, 
+    deleteReport, 
+    setCurrentReport 
+  } = useReportsStore();
 
-  const [searchTerm, setSearchTerm] = useState('');
-  const [userFilter, setUserFilter] = useState('all');
-  const [contentFilter, setContentFilter] = useState('all');
-
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = userFilter === 'all' || user.status === userFilter;
-    return matchesSearch && matchesFilter;
+  const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d'>('7d');
+  const [showPreview, setShowPreview] = useState(false);
+  const [showFormatDialog, setShowFormatDialog] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [selectedReportId, setSelectedReportId] = useState<string>('');
+  const [selectedFormat, setSelectedFormat] = useState<ReportFormat | ''>('');
+  
+  // Estados del formulario de reporte
+  const [reportForm, setReportForm] = useState<ReportForm>({
+    title: '',
+    type: 'complete',
+    dateFrom: '',
+    dateTo: '',
+    dataImportance: 'usuarios_registrados',
+    includeCharts: true
   });
 
-  const filteredContent = content.filter(item => {
-    const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = contentFilter === 'all' || item.status === contentFilter;
-    return matchesSearch && matchesFilter;
-  });
+  // Configuración de gráficos
+  const chartConfig = {
+    timeSpent: {
+      label: "Tiempo (min)",
+      color: "#3b82f6",
+    },
+    sessions: {
+      label: "Sesiones",
+      color: "#8b5cf6",
+    },
+    views: {
+      label: "Vistas",
+      color: "#06b6d4",
+    },
+    uniqueVisitors: {
+      label: "Visitantes únicos",
+      color: "#10b981",
+    },
+    registrations: {
+      label: "Registros",
+      color: "#f59e0b",
+    },
+    verified: {
+      label: "Verificados",
+      color: "#22c55e",
+    },
+    retention: {
+      label: "Retención (%)",
+      color: "#ef4444",
+    },
+    active: {
+      label: "Usuarios activos",
+      color: "#8b5cf6",
+    },
+  };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active':
-        return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
-      case 'suspended':
-        return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400';
-      case 'published':
-        return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
-      case 'draft':
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
-      case 'flagged':
-        return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+  useEffect(() => {
+    fetchMetrics();
+  }, [fetchMetrics]);
+
+  const handleTimeRangeChange = (range: '7d' | '30d' | '90d') => {
+    setTimeRange(range);
+    updateTimeRange(range);
+  };
+
+  const handleGenerateReport = async () => {
+    if (!reportForm.dateFrom || !reportForm.dateTo) return;
+    
+    // Generar título automáticamente
+    const typeNames = {
+      complete: 'Completo',
+      performance: 'Desempeño',
+      users: 'Usuarios',
+      content: 'Contenido'
+    };
+    
+    const fromDate = new Date(reportForm.dateFrom);
+    const toDate = new Date(reportForm.dateTo);
+    const autoTitle = `Informe ${typeNames[reportForm.type]} - ${fromDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}`;
+    
+    await generateReport({
+      title: autoTitle,
+      type: reportForm.type,
+      dateRange: {
+        from: reportForm.dateFrom,
+        to: reportForm.dateTo,
+      },
+      dataImportance: reportForm.dataImportance,
+      includeCharts: reportForm.includeCharts,
+    });
+    
+    // Resetear el formulario
+    setReportForm({
+      title: '',
+      type: 'complete',
+      dateFrom: '',
+      dateTo: '',
+      dataImportance: 'usuarios_registrados',
+      includeCharts: true
+    });
+  };
+
+  const handlePreviewReport = (report: Report) => {
+    setCurrentReport(report);
+    setShowPreview(true);
+  };
+
+  const handleDownloadClick = (reportId: string) => {
+    setSelectedReportId(reportId);
+    setSelectedFormat('');
+    setShowFormatDialog(true);
+  };
+
+  const handleConfirmDownload = async () => {
+    if (selectedFormat && selectedReportId) {
+      await downloadReport(selectedReportId, selectedFormat);
+      setShowFormatDialog(false);
+      setShowSuccessDialog(true);
+      setSelectedFormat('');
     }
   };
 
+  const handleSuccessClose = () => {
+    setShowSuccessDialog(false);
+    setShowPreview(false);
+  };
+
   return (
-    <DashboardLayout>
+    <DashboardAdminLayout>
       <div className="p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center space-x-2">
-              <Shield className="h-8 w-8 text-blue-600" />
-              <span>Panel de Administración</span>
+              <BarChart3 className="h-8 w-8 text-blue-600" />
+              <span>Métricas Avanzadas</span>
             </h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              Gestiona usuarios, contenido y configuraciones del sistema
+            <p className="text-gray-600 dark:text-gray-400 mt-2">
+              Analiza las métricas detalladas de la plataforma y genera informes
             </p>
           </div>
         </div>
-
-        {/* System Stats */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Usuarios</CardTitle>
-              <Users className="h-4 w-4 text-blue-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{systemStats.totalUsers}</div>
-              <p className="text-xs text-green-600 flex items-center mt-1">
-                <TrendingUp className="h-3 w-3 mr-1" />
-                +{systemStats.newUsersThisMonth} este mes
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Contenido Total</CardTitle>
-              <FileText className="h-4 w-4 text-purple-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{systemStats.totalContent}</div>
-              <p className="text-xs text-green-600 flex items-center mt-1">
-                <TrendingUp className="h-3 w-3 mr-1" />
-                +{systemStats.contentThisMonth} este mes
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Ingresos Mensuales</CardTitle>
-              <DollarSign className="h-4 w-4 text-green-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">${systemStats.monthlyRevenue.toLocaleString()}</div>
-              <p className="text-xs text-green-600 flex items-center mt-1">
-                <TrendingUp className="h-3 w-3 mr-1" />
-                +{systemStats.revenueGrowth}% vs mes anterior
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Usuarios Activos</CardTitle>
-              <BarChart3 className="h-4 w-4 text-orange-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{systemStats.activeUsers}</div>
-              <p className="text-xs text-gray-600 dark:text-gray-400">
-                Últimos 30 días
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Main Content Tabs */}
-        <Tabs defaultValue="users" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="users">Usuarios</TabsTrigger>
-            <TabsTrigger value="content">Contenido</TabsTrigger>
-            <TabsTrigger value="transactions">Transacciones</TabsTrigger>
-            <TabsTrigger value="settings">Configuración</TabsTrigger>
+        
+        <Tabs defaultValue="metrics" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="metrics">Métricas</TabsTrigger>
+            <TabsTrigger value="reports">Informes</TabsTrigger>
           </TabsList>
 
-          {/* Users Tab */}
-          <TabsContent value="users" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Users className="h-5 w-5" />
-                  <span>Gestión de Usuarios</span>
-                </CardTitle>
-                <CardDescription>
-                  Administra todos los usuarios de la plataforma
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Filters */}
-                <div className="flex flex-col md:flex-row gap-4">
-                  <div className="flex-1">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <Input
-                        placeholder="Buscar usuarios..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-                  </div>
-                  <Select value={userFilter} onValueChange={setUserFilter}>
-                    <SelectTrigger className="w-48">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos los estados</SelectItem>
-                      <SelectItem value="active">Activos</SelectItem>
-                      <SelectItem value="suspended">Suspendidos</SelectItem>
-                      <SelectItem value="pending">Pendientes</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+          {/* Tab de Métricas */}
+          <TabsContent value="metrics" className="space-y-6">
+            <div className="flex justify-end">
+              <div className="flex space-x-2">
+                {(['7d', '30d', '90d'] as const).map((range) => (
+                  <Button
+                    key={range}
+                    variant={timeRange === range ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handleTimeRangeChange(range)}
+                  >
+                    {range === '7d' ? '7 días' : range === '30d' ? '30 días' : '90 días'}
+                  </Button>
+                ))}
+              </div>
+            </div>
 
-                {/* Users List */}
-                <div className="space-y-4">
-                  {filteredUsers.map((user) => (
-                    <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                          <span className="text-white font-medium">{user.name.charAt(0)}</span>
-                        </div>
-                        <div>
-                          <h3 className="font-medium">{user.name}</h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">{user.email}</p>
-                          <div className="flex items-center space-x-2 mt-1">
-                            <Badge className={getStatusColor(user.status)}>
-                              {user.status}
-                            </Badge>
-                            <Badge variant="outline" className="capitalize">
-                              {user.plan}
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center space-x-2">
-                        <div className="text-right text-sm">
-                          <div className="font-medium">{user.credits} créditos</div>
-                          <div className="text-gray-600 dark:text-gray-400">
-                            Registrado: {format(user.createdAt, 'dd/MM/yyyy')}
-                          </div>
-                        </div>
-                        
-                        <div className="flex items-center space-x-1">
-                          <Button variant="ghost" size="sm">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => updateUserStatus(user.id, user.status === 'active' ? 'suspended' : 'active')}
-                            className={user.status === 'active' ? 'text-red-600 hover:text-red-700' : 'text-green-600 hover:text-green-700'}
-                          >
-                            {user.status === 'active' ? <Ban className="h-4 w-4" /> : <CheckCircle className="h-4 w-4" />}
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => deleteUser(user.id)}
-                            className="text-red-600 hover:text-red-700"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+            {/* System Stats - Resumen rápido */}
+            <SystemStatsCards systemStats={systemStats} />
 
-          {/* Content Tab */}
-          <TabsContent value="content" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <FileText className="h-5 w-5" />
-                  <span>Gestión de Contenido</span>
-                </CardTitle>
-                <CardDescription>
-                  Modera y administra todo el contenido generado
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Content Filters */}
-                <div className="flex flex-col md:flex-row gap-4">
-                  <div className="flex-1">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <Input
-                        placeholder="Buscar contenido..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-                  </div>
-                  <Select value={contentFilter} onValueChange={setContentFilter}>
-                    <SelectTrigger className="w-48">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos los estados</SelectItem>
-                      <SelectItem value="published">Publicado</SelectItem>
-                      <SelectItem value="draft">Borrador</SelectItem>
-                      <SelectItem value="flagged">Marcado</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+            {/* Estadísticas Generales */}
+            <div className="space-y-6">
+              <div className="flex items-center space-x-2">
+                <Globe className="h-6 w-6 text-blue-600" />
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Estadísticas Generales</h2>
+              </div>
+              
+              <div className="grid gap-6 md:grid-cols-2">
+                <WebUsageChart data={webUsage} chartConfig={chartConfig} />
+                <UserViewsChart data={userViews} chartConfig={chartConfig} />
+              </div>
+            </div>
 
-                {/* Content List */}
-                <div className="space-y-4">
-                  {filteredContent.map((item) => (
-                    <div key={item.id} className="flex items-start justify-between p-4 border rounded-lg">
-                      <div className="flex-1 space-y-2">
-                        <div className="flex items-center space-x-2">
-                          <h3 className="font-medium">{item.title}</h3>
-                          <Badge className={getStatusColor(item.status)}>
-                            {item.status}
-                          </Badge>
-                          <Badge variant="outline" className="capitalize">
-                            {item.platform}
-                          </Badge>
-                        </div>
-                        
-                        <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
-                          <span>Por: {item.authorName}</span>
-                          <span>Creado: {format(item.createdAt, 'dd/MM/yyyy HH:mm')}</span>
-                          {item.engagement && (
-                            <span>{item.engagement.views} visualizaciones</span>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center space-x-1">
-                        <Button variant="ghost" size="sm">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => updateContentStatus(item.id, item.status === 'flagged' ? 'published' : 'flagged')}
-                          className={item.status === 'flagged' ? 'text-green-600 hover:text-green-700' : 'text-yellow-600 hover:text-yellow-700'}
-                        >
-                          {item.status === 'flagged' ? <CheckCircle className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => deleteContent(item.id)}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+            {/* Contenido */}
+            <div className="space-y-6">
+              <div className="flex items-center space-x-2">
+                <FileText className="h-6 w-6 text-purple-600" />
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Análisis de Contenido</h2>
+              </div>
+              
+              <ContentAnalysisCards 
+                trendingTopics={trendingTopics}
+                leastVisitedTopics={leastVisitedTopics}
+                platformStats={platformStats}
+                chartConfig={chartConfig}
+              />
+            </div>
 
-          {/* Transactions Tab */}
-          <TabsContent value="transactions" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <CreditCard className="h-5 w-5" />
-                  <span>Transacciones</span>
-                </CardTitle>
-                <CardDescription>
-                  Historial completo de transacciones y pagos
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {transactions.map((transaction) => (
-                    <div key={transaction.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center">
-                          <CreditCard className="h-5 w-5 text-blue-600" />
-                        </div>
-                        <div>
-                          <p className="font-medium">{transaction.description}</p>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                            Usuario: {transaction.userName}
-                          </p>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                            {format(transaction.date, 'dd/MM/yyyy HH:mm')}
-                          </p>
-                        </div>
-                      </div>
-                      
-                      <div className="text-right">
-                        <p className="font-medium text-lg">
-                          ${transaction.amount}
-                        </p>
-                        <Badge className={getStatusColor(transaction.status)}>
-                          {transaction.status}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Settings Tab */}
-          <TabsContent value="settings" className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Settings className="h-5 w-5" />
-                    <span>Configuración del Sistema</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Límite de créditos gratuitos</label>
-                    <Input type="number" defaultValue="50" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Precio por crédito adicional</label>
-                    <Input type="number" step="0.01" defaultValue="0.10" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Máximo contenido por día</label>
-                    <Input type="number" defaultValue="20" />
-                  </div>
-                  <Button className="w-full">Guardar Configuración</Button>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Moderación de Contenido</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Filtro de palabras prohibidas</label>
-                    <Input placeholder="Separar con comas" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Revisión automática</label>
-                    <Select defaultValue="enabled">
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="enabled">Habilitada</SelectItem>
-                        <SelectItem value="disabled">Deshabilitada</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <Button className="w-full">Actualizar Filtros</Button>
-                </CardContent>
-              </Card>
+            {/* Usuarios */}
+            <div className="space-y-6">
+              <div className="flex items-center space-x-2">
+                <Users className="h-6 w-6 text-blue-600" />
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Análisis de Usuarios</h2>
+              </div>
+              
+              <UserAnalysisCharts 
+                recentUsers={recentUsers}
+                userRetention={userRetention}
+                userActivity={userActivity}
+                chartConfig={chartConfig}
+              />
             </div>
           </TabsContent>
+
+          {/* Tab de Informes */}
+          <TabsContent value="reports" className="space-y-6">
+            <ReportsSection
+              reports={reports}
+              reportForm={reportForm}
+              isGenerating={isGenerating}
+              onReportFormChange={setReportForm}
+              onGenerateReport={handleGenerateReport}
+              onPreviewReport={handlePreviewReport}
+              onDownloadClick={handleDownloadClick}
+            />
+          </TabsContent>
         </Tabs>
+
+        {/* Modales */}
+        <ReportModals
+          showPreview={showPreview}
+          currentReport={currentReport}
+          onPreviewClose={() => setShowPreview(false)}
+          showFormatDialog={showFormatDialog}
+          selectedFormat={selectedFormat}
+          onFormatChange={(format) => setSelectedFormat(format)}
+          onFormatDialogClose={() => setShowFormatDialog(false)}
+          onConfirmDownload={handleConfirmDownload}
+          showSuccessDialog={showSuccessDialog}
+          onSuccessClose={handleSuccessClose}
+          onDownloadClick={handleDownloadClick}
+        />
       </div>
-    </DashboardLayout>
+    </DashboardAdminLayout>
   );
 }

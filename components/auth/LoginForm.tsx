@@ -30,8 +30,12 @@ export function LoginForm() {
       if (success) {
         // Obtener el usuario actualizado después del login
         const { user } = useAuthStore.getState();
-        // Verificar si el usuario ha completado el onboarding
-        if (user && !user.hasCompletedOnboarding) {
+        
+        // Verificar si el usuario es admin
+        if (user && (user.email === 'admin@contentai.com' || user.plan === 'admin')) {
+          router.push('/admin');
+        } else if (user && !user.hasCompletedOnboarding) {
+          // Verificar si el usuario ha completado el onboarding
           router.push('/auth/onboarding');
         } else {
           router.push('/dashboard');

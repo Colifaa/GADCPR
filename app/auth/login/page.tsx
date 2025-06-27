@@ -33,7 +33,7 @@ export default function LoginPage() {
       <div className="flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center space-x-2">
-          <Image src="/img/landing/logo/logo.png" alt="Logo" width={100} height={100} />
+          <Image src="/images/landing/logo/logo.png" alt="Logo" width={100} height={100} />
         </Link>
 
         {/* Regresar Link */}

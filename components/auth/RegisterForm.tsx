@@ -16,6 +16,7 @@ interface RegisterData {
   nickname: string;
   password: string;
   confirmPassword: string;
+  role: 'user' | 'admin';
 }
 
 interface ValidationErrors {
@@ -37,6 +38,7 @@ export function RegisterForm() {
     nickname: '',
     password: '',
     confirmPassword: '',
+    role: 'user',
   });
 
   const [errors, setErrors] = useState<ValidationErrors>({});
@@ -46,7 +48,7 @@ export function RegisterForm() {
 
   const handleInputChange = (field: keyof RegisterData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    if (errors[field]) {
+    if (field !== 'role' && errors[field as keyof ValidationErrors]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
     }
   };
@@ -128,6 +130,10 @@ export function RegisterForm() {
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleRoleChange = (role: 'user' | 'admin') => {
+    setFormData(prev => ({ ...prev, role }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -147,7 +153,8 @@ export function RegisterForm() {
         formData.fullName.trim(),
         formData.email.trim(),
         formData.password,
-        formData.nickname.trim() || undefined
+        formData.nickname.trim() || undefined,
+        formData.role
       );
 
       if (success) {
@@ -194,7 +201,7 @@ export function RegisterForm() {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
         <h1 className="text-2xl font-bold text-gray-900 text-center mb-8">Registrarse</h1>
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Nombre */}
+          {/* Inputs de registro */}
           <div className="space-y-2">
             <Label htmlFor="fullName" className="text-sm font-medium text-gray-600">
               Nombre
@@ -209,8 +216,6 @@ export function RegisterForm() {
               required
             />
           </div>
-
-          {/* Email */}
           <div className="space-y-2">
             <Label htmlFor="email" className="text-sm font-medium text-gray-600">
               E-mail
@@ -225,8 +230,6 @@ export function RegisterForm() {
               required
             />
           </div>
-
-          {/* Nickname (opcional) */}
           <div className="space-y-2">
             <Label htmlFor="nickname" className="text-sm font-medium text-gray-600">
               Nickname (opcional)
@@ -240,8 +243,6 @@ export function RegisterForm() {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-blue-50"
             />
           </div>
-
-          {/* Password */}
           <div className="space-y-2">
             <Label htmlFor="password" className="text-sm font-medium text-gray-600">
               Contraseña
@@ -265,8 +266,6 @@ export function RegisterForm() {
               </button>
             </div>
           </div>
-
-          {/* Confirmar Contraseña */}
           <div className="space-y-2">
             <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-600">
               Confirmar Contraseña
@@ -281,7 +280,41 @@ export function RegisterForm() {
               required
             />
           </div>
-
+          {/* Selección de tipo de cuenta */}
+          <div>
+            <Label className="block text-sm font-medium text-gray-700 mb-2">Tipo de cuenta</Label>
+            <div className="flex flex-col gap-3">
+              <button
+                type="button"
+                onClick={() => handleRoleChange('user')}
+                className={`flex items-center justify-between p-4 rounded-lg border transition-all ${formData.role === 'user' ? 'border-blue-500 bg-blue-50 shadow-sm' : 'border-gray-200 bg-white'} hover:border-blue-400`}
+              >
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">👤</span>
+                    <span className="font-semibold text-gray-900">Suscriptor</span>
+                  </div>
+                  <span className="block text-sm text-gray-600">Accede a contenido exclusivo y conecta con creadores</span>
+                </div>
+                {formData.role === 'user' && <span className="text-green-500 text-xl ml-4">●</span>}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleRoleChange('admin')}
+                className={`flex items-center justify-between p-4 rounded-lg border transition-all ${formData.role === 'admin' ? 'border-yellow-500 bg-yellow-50 shadow-sm' : 'border-gray-200 bg-white'} hover:border-yellow-400`}
+              >
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">👑</span>
+                    <span className="font-semibold text-gray-900">Administrador <span className="ml-2 px-2 py-0.5 text-xs bg-yellow-200 text-yellow-800 rounded">Solo Demo</span></span>
+                  </div>
+                  <span className="block text-sm text-gray-600">Gestiona la plataforma y supervisa usuarios</span>
+                  <span className="block text-xs text-orange-600 mt-1">Disponible solo en versión de demostración</span>
+                </div>
+                {formData.role === 'admin' && <span className="text-yellow-500 text-xl ml-4">●</span>}
+              </button>
+            </div>
+          </div>
           {/* Botón de Registro */}
           <Button
             type="submit"

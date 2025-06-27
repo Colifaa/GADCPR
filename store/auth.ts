@@ -24,13 +24,14 @@ interface User {
   document?: string;
   country?: string;
   subscription?: 'gratuita' | 'paga' | 'equipo';
+  role: 'user' | 'admin';
 }
 
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<boolean>;
-  register: (name: string, email: string, password: string, nickname?: string) => Promise<boolean>;
+  register: (name: string, email: string, password: string, nickname?: string, role?: 'user' | 'admin') => Promise<boolean>;
   logout: () => void;
   updateUser: (updates: Partial<User>) => void;
   updateProfile: (updates: Partial<User>) => Promise<boolean>;
@@ -151,34 +152,29 @@ export const useAuthStore = create<AuthState>()(
         }
       },
       
-      register: async (name: string, email: string, password: string, nickname?: string) => {
+      register: async (name: string, email: string, password: string, nickname?: string, role?: 'user' | 'admin') => {
         // Simulate API call
         await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        console.log('📝 Registrando usuario:', { name, email, nickname, password: '***' });
-        
+        console.log('📝 Registrando usuario:', { name, email, nickname, password: '***', role });
         const users = getLocalUsers();
-        
         // Verificar si el email ya existe
         const existingUser = users.find((u: any) => u.email === email);
         if (existingUser) {
           console.log('❌ Email ya registrado');
           return false;
         }
-        
         const newUserWithPassword = {
           id: Date.now().toString(),
           name,
           email,
           password, // ¡IMPORTANTE: Guardar la contraseña!
           nickname,
-          plan: 'free' as const,
+          plan: role === 'admin' ? 'admin' : 'free',
+          role: role || 'user',
           credits: 50
         };
-        
         users.push(newUserWithPassword);
         const saved = saveLocalUsers(users);
-        
         if (saved) {
           // Crear usuario sin contraseña para el estado
           const { password: _, ...newUser } = newUserWithPassword;

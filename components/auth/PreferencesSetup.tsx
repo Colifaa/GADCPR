@@ -3,10 +3,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { 
   TrendingUp, 
@@ -42,107 +39,119 @@ interface PreferencesSetupProps {
 // Temas de interés disponibles
 const INTEREST_TOPICS = [
   {
-    id: 'marketing-digital',
-    name: 'Marketing Digital y Estrategias de Contenido',
-    description: 'Tendencias, tácticas y mejores prácticas para promocionar marcas y servicios',
+    id: 'tendencias-redes-sociales',
+    name: 'Tendencias en Redes Sociales',
     icon: TrendingUp
   },
   {
-    id: 'tecnologia-innovacion',
-    name: 'Tecnología e Innovación',
-    description: 'Nuevas tecnologías, herramientas y soluciones de IA para contenido',
-    icon: Cpu
-  },
-  {
-    id: 'podcasts-audio',
-    name: 'Podcasts y Audio Digital',
-    description: 'Producción, monetización, análisis y tendencias en podcasts',
-    icon: Headphones
-  },
-  {
-    id: 'redes-sociales',
-    name: 'Redes Sociales y Community Management',
-    description: 'Estrategias para aumentar engagement en Instagram, Facebook, TikTok, etc.',
-    icon: Users
-  },
-  {
-    id: 'analisis-datos',
-    name: 'Análisis de Datos y Métricas',
-    description: 'Interpretación de datos de interacción, tendencias y audiencia',
-    icon: BarChart
-  },
-  {
-    id: 'empresas-negocios',
-    name: 'Empresas y Negocios',
-    description: 'Contenido automatizado para objetivos empresariales y comunicación',
-    icon: Building
-  },
-  {
-    id: 'educacion-capacitacion',
-    name: 'Educación y Capacitación en Marketing',
-    description: 'Temas educativos sobre marketing digital y creación de contenido',
+    id: 'tendencias-educacion',
+    name: 'Tendencias en la Educación',
     icon: GraduationCap
   },
   {
-    id: 'campanas-sociales',
-    name: 'Campañas Sociales y Sin Fines de Lucro',
-    description: 'Contenido para campañas sociales y mensajes solidarios',
+    id: 'sustainability',
+    name: 'Sustainability',
     icon: Heart
+  },
+  {
+    id: 'gaming',
+    name: 'Gaming',
+    icon: Cpu
+  },
+  {
+    id: 'aprendizaje',
+    name: 'Aprendizaje',
+    icon: GraduationCap
+  },
+  {
+    id: 'arte',
+    name: 'Arte',
+    icon: Image
+  },
+  {
+    id: 'creatividad',
+    name: 'Creatividad',
+    icon: Sparkles
+  },
+  {
+    id: 'tecnologia',
+    name: 'Tecnología',
+    icon: Cpu
   }
 ];
 
-// Formatos de contenido disponibles
+
+
+// Formatos de contenido disponibles (Preferencias)
 const CONTENT_FORMATS = [
   {
-    id: 'texto',
-    name: 'Texto',
-    description: 'Artículos, guiones, posts',
-    icon: FileText
+    id: 'social-media',
+    name: 'Social Media',
+    icon: Users
   },
   {
-    id: 'audio',
-    name: 'Audio',
-    description: 'Podcasts, clips cortos',
-    icon: Mic
-  },
-  {
-    id: 'video',
-    name: 'Video',
-    description: 'Guiones y contenido audiovisual',
+    id: 'reels',
+    name: 'Reels',
     icon: Video
   },
   {
-    id: 'imagenes',
-    name: 'Imágenes',
-    description: 'Contenido visual y gráfico',
-    icon: Image
+    id: 'comunidad-online',
+    name: 'Comunidad en línea',
+    icon: Users
+  },
+  {
+    id: 'historias-personales',
+    name: 'Historias personales',
+    icon: Heart
+  },
+  {
+    id: 'justicia',
+    name: 'Justicia',
+    icon: BarChart
+  },
+  {
+    id: 'crecimiento-personal',
+    name: 'Crecimiento personal',
+    icon: TrendingUp
+  },
+  {
+    id: 'articulos-informativos',
+    name: 'Artículos Informativos',
+    icon: FileText
+  },
+  {
+    id: 'publicaciones-interactivas',
+    name: 'Publicaciones Interactivas',
+    icon: Sparkles
   }
 ];
 
+
+
 // Opciones de tono
 const TONE_OPTIONS = [
-  { id: 'formal', name: 'Formal', description: 'Profesional y serio' },
-  { id: 'informal', name: 'Informal', description: 'Casual y cercano' },
-  { id: 'educativo', name: 'Educativo', description: 'Informativo y didáctico' },
-  { id: 'promocional', name: 'Promocional', description: 'Persuasivo y comercial' },
-  { id: 'inspirador', name: 'Inspirador', description: 'Motivacional y positivo' }
+  { id: 'formal', name: 'Formal', description: 'Profesional y serio', icon: Building },
+  { id: 'informal', name: 'Informal', description: 'Casual y cercano', icon: Users },
+  { id: 'educativo', name: 'Educativo', description: 'Informativo y didáctico', icon: GraduationCap },
+  { id: 'promocional', name: 'Promocional', description: 'Persuasivo y comercial', icon: TrendingUp },
+  { id: 'inspirador', name: 'Inspirador', description: 'Motivacional y positivo', icon: Heart }
 ];
 
 // Opciones de frecuencia
 const FREQUENCY_OPTIONS = [
-  { id: 'diario', name: 'Diario', description: 'Contenido todos los días' },
-  { id: 'semanal', name: 'Semanal', description: 'Contenido cada semana' },
-  { id: 'mensual', name: 'Mensual', description: 'Contenido cada mes' },
-  { id: 'personalizado', name: 'Personalizado', description: 'Según mi estrategia' }
+  { id: 'diario', name: 'Diario', description: 'Contenido todos los días', icon: BarChart },
+  { id: 'semanal', name: 'Semanal', description: 'Contenido cada semana', icon: TrendingUp },
+  { id: 'mensual', name: 'Mensual', description: 'Contenido cada mes', icon: Building },
+  { id: 'personalizado', name: 'Personalizado', description: 'Según mi estrategia', icon: Sparkles }
 ];
 
 // Audiencia objetivo
 const TARGET_AUDIENCE = [
-  { id: 'profesionales', name: 'Profesionales', description: 'Ejecutivos y empresarios' },
-  { id: 'jovenes', name: 'Jóvenes', description: '18-30 años' },
-  { id: 'estudiantes', name: 'Estudiantes', description: 'Universitarios y académicos' },
-  { id: 'publico-general', name: 'Público General', description: 'Audiencia amplia' },
-  { id: 'empresas', name: 'Empresas', description: 'B2B y corporativo' }
+  { id: 'profesionales', name: 'Profesionales', description: 'Ejecutivos y empresarios', icon: Building },
+  { id: 'jovenes', name: 'Jóvenes', description: '18-30 años', icon: Users },
+  { id: 'estudiantes', name: 'Estudiantes', description: 'Universitarios y académicos', icon: GraduationCap },
+  { id: 'publico-general', name: 'Público General', description: 'Audiencia amplia', icon: Heart },
+  { id: 'empresas', name: 'Empresas', description: 'B2B y corporativo', icon: BarChart }
 ];
 
 export function PreferencesSetup({ onComplete, isLoading = false }: PreferencesSetupProps) {
@@ -184,6 +193,14 @@ export function PreferencesSetup({ onComplete, isLoading = false }: PreferencesS
         ? [...prev.targetAudience, audienceId]
         : prev.targetAudience.filter(id => id !== audienceId)
     }));
+  };
+
+  const handleToneChange = (toneId: string) => {
+    setPreferences(prev => ({ ...prev, tone: toneId }));
+  };
+
+  const handleFrequencyChange = (frequencyId: string) => {
+    setPreferences(prev => ({ ...prev, frequency: frequencyId }));
   };
 
   const canProceedToNextStep = () => {
@@ -240,33 +257,30 @@ export function PreferencesSetup({ onComplete, isLoading = false }: PreferencesS
     switch (currentStep) {
       case 1:
         return (
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div className="text-center space-y-2">
-              <h3 className="text-xl font-semibold">¿Qué temas te interesan?</h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                Selecciona los temas sobre los que te gustaría generar contenido
-              </p>
+              <h3 className="text-xl font-semibold">Intereses</h3>
+              <p className="text-gray-600">Selecciona los temas que te interesan</p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            {/* Intereses principales */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {INTEREST_TOPICS.map((topic) => {
                 const IconComponent = topic.icon;
+                const isSelected = preferences.interestTopics.includes(topic.id);
                 return (
-                  <div key={topic.id} className="flex items-start space-x-3 p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
-                    <Checkbox
-                      id={topic.id}
-                      checked={preferences.interestTopics.includes(topic.id)}
-                      onCheckedChange={(checked) => handleTopicChange(topic.id, checked as boolean)}
-                    />
-                    <div className="flex-1 space-y-1">
-                      <div className="flex items-center space-x-2">
-                        <IconComponent className="h-4 w-4 text-blue-500" />
-                        <Label htmlFor={topic.id} className="font-medium cursor-pointer">
-                          {topic.name}
-                        </Label>
-                      </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {topic.description}
-                      </p>
+                  <div key={topic.id} className="bg-gray-50 p-4 rounded-lg text-center space-y-3">
+                    <div className="mx-auto w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <IconComponent className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <p className="text-sm font-medium text-gray-900">{topic.name}</p>
+                    <div className="flex justify-center">
+                      <Checkbox
+                        id={topic.id}
+                        checked={isSelected}
+                        onCheckedChange={(checked) => handleTopicChange(topic.id, checked as boolean)}
+                        className="w-4 h-4"
+                      />
                     </div>
                   </div>
                 );
@@ -277,33 +291,30 @@ export function PreferencesSetup({ onComplete, isLoading = false }: PreferencesS
 
       case 2:
         return (
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div className="text-center space-y-2">
-              <h3 className="text-xl font-semibold">¿Qué formatos prefieres?</h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                Selecciona los tipos de contenido que quieres crear
-              </p>
+              <h3 className="text-xl font-semibold">Preferencias</h3>
+              <p className="text-gray-600">Selecciona tus formatos de contenido preferidos</p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            {/* Preferencias principales */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {CONTENT_FORMATS.map((format) => {
                 const IconComponent = format.icon;
+                const isSelected = preferences.contentFormat.includes(format.id);
                 return (
-                  <div key={format.id} className="flex items-start space-x-3 p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
-                    <Checkbox
-                      id={format.id}
-                      checked={preferences.contentFormat.includes(format.id)}
-                      onCheckedChange={(checked) => handleFormatChange(format.id, checked as boolean)}
-                    />
-                    <div className="flex-1 space-y-1">
-                      <div className="flex items-center space-x-2">
-                        <IconComponent className="h-4 w-4 text-purple-500" />
-                        <Label htmlFor={format.id} className="font-medium cursor-pointer">
-                          {format.name}
-                        </Label>
-                      </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {format.description}
-                      </p>
+                  <div key={format.id} className="bg-gray-50 p-4 rounded-lg text-center space-y-3">
+                    <div className="mx-auto w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <IconComponent className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <p className="text-sm font-medium text-gray-900">{format.name}</p>
+                    <div className="flex justify-center">
+                      <Checkbox
+                        id={format.id}
+                        checked={isSelected}
+                        onCheckedChange={(checked) => handleFormatChange(format.id, checked as boolean)}
+                        className="w-4 h-4"
+                      />
                     </div>
                   </div>
                 );
@@ -314,93 +325,126 @@ export function PreferencesSetup({ onComplete, isLoading = false }: PreferencesS
 
       case 3:
         return (
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div className="text-center space-y-2">
-              <h3 className="text-xl font-semibold">¿Qué tono prefieres?</h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                Selecciona el estilo de comunicación para tu contenido
-              </p>
+              <h3 className="text-xl font-semibold">Tono de Contenido</h3>
+              <p className="text-gray-600">Selecciona el estilo de comunicación para tu contenido</p>
             </div>
-            <RadioGroup
-              value={preferences.tone}
-              onValueChange={(value) => setPreferences(prev => ({ ...prev, tone: value }))}
-              className="space-y-3"
-            >
-              {TONE_OPTIONS.map((tone) => (
-                <div key={tone.id} className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
-                  <RadioGroupItem value={tone.id} id={tone.id} />
-                  <div className="flex-1">
-                    <Label htmlFor={tone.id} className="font-medium cursor-pointer">
-                      {tone.name}
-                    </Label>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {tone.description}
-                    </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {TONE_OPTIONS.map((tone) => {
+                const IconComponent = tone.icon;
+                const isSelected = preferences.tone === tone.id;
+                return (
+                  <div 
+                    key={tone.id} 
+                    className={`bg-gray-50 p-4 rounded-lg cursor-pointer border-2 transition-all ${
+                      isSelected ? 'border-blue-500 bg-blue-50' : 'border-transparent hover:border-gray-200'
+                    }`}
+                    onClick={() => handleToneChange(tone.id)}
+                  >
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <IconComponent className="w-6 h-6 text-blue-600" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-900">{tone.name}</p>
+                        <p className="text-xs text-gray-600">{tone.description}</p>
+                      </div>
+                      <div className="flex justify-center">
+                        <Checkbox
+                          checked={isSelected}
+                          className="w-4 h-4"
+                        />
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </RadioGroup>
+                );
+              })}
+            </div>
           </div>
         );
 
       case 4:
         return (
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div className="text-center space-y-2">
-              <h3 className="text-xl font-semibold">¿Con qué frecuencia?</h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                Define la periodicidad de tu contenido
-              </p>
+              <h3 className="text-xl font-semibold">Frecuencia de Contenido</h3>
+              <p className="text-gray-600">Define la periodicidad de tu contenido</p>
             </div>
-            <RadioGroup
-              value={preferences.frequency}
-              onValueChange={(value) => setPreferences(prev => ({ ...prev, frequency: value }))}
-              className="space-y-3"
-            >
-              {FREQUENCY_OPTIONS.map((frequency) => (
-                <div key={frequency.id} className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
-                  <RadioGroupItem value={frequency.id} id={frequency.id} />
-                  <div className="flex-1">
-                    <Label htmlFor={frequency.id} className="font-medium cursor-pointer">
-                      {frequency.name}
-                    </Label>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {frequency.description}
-                    </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {FREQUENCY_OPTIONS.map((frequency) => {
+                const IconComponent = frequency.icon;
+                const isSelected = preferences.frequency === frequency.id;
+                return (
+                  <div 
+                    key={frequency.id} 
+                    className={`bg-gray-50 p-4 rounded-lg cursor-pointer border-2 transition-all ${
+                      isSelected ? 'border-blue-500 bg-blue-50' : 'border-transparent hover:border-gray-200'
+                    }`}
+                    onClick={() => handleFrequencyChange(frequency.id)}
+                  >
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <IconComponent className="w-6 h-6 text-blue-600" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-900">{frequency.name}</p>
+                        <p className="text-xs text-gray-600">{frequency.description}</p>
+                      </div>
+                      <div className="flex justify-center">
+                        <Checkbox
+                          checked={isSelected}
+                          className="w-4 h-4"
+                        />
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </RadioGroup>
+                );
+              })}
+            </div>
           </div>
         );
 
       case 5:
         return (
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div className="text-center space-y-2">
-              <h3 className="text-xl font-semibold">¿Cuál es tu audiencia?</h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                Selecciona a quién va dirigido tu contenido
-              </p>
+              <h3 className="text-xl font-semibold">Audiencia Objetivo</h3>
+              <p className="text-gray-600">Selecciona a quién va dirigido tu contenido</p>
             </div>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {TARGET_AUDIENCE.map((audience) => (
-                <div key={audience.id} className="flex items-start space-x-3 p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
-                  <Checkbox
-                    id={audience.id}
-                    checked={preferences.targetAudience.includes(audience.id)}
-                    onCheckedChange={(checked) => handleAudienceChange(audience.id, checked as boolean)}
-                  />
-                  <div className="flex-1 space-y-1">
-                    <Label htmlFor={audience.id} className="font-medium cursor-pointer">
-                      {audience.name}
-                    </Label>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {audience.description}
-                    </p>
+              {TARGET_AUDIENCE.map((audience) => {
+                const IconComponent = audience.icon;
+                const isSelected = preferences.targetAudience.includes(audience.id);
+                return (
+                  <div 
+                    key={audience.id} 
+                    className={`bg-gray-50 p-4 rounded-lg cursor-pointer border-2 transition-all ${
+                      isSelected ? 'border-blue-500 bg-blue-50' : 'border-transparent hover:border-gray-200'
+                    }`}
+                    onClick={() => handleAudienceChange(audience.id, !isSelected)}
+                  >
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <IconComponent className="w-6 h-6 text-blue-600" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-900">{audience.name}</p>
+                        <p className="text-xs text-gray-600">{audience.description}</p>
+                      </div>
+                      <div className="flex justify-center">
+                        <Checkbox
+                          checked={isSelected}
+                          className="w-4 h-4"
+                        />
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         );

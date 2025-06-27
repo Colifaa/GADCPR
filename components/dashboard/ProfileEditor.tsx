@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useAuthStore } from '@/store/auth';
 import { useToast } from '@/hooks/use-toast';
 import { toast as sonnerToast } from 'sonner';
-import { Camera, Edit2, Eye, EyeOff, Headphones, ChevronDown, ChevronUp, Calendar, CreditCard, Globe, Crown } from 'lucide-react';
+import { Camera, Edit2, Eye, EyeOff, Headphones, ChevronDown, ChevronUp, Calendar, CreditCard, Globe, Crown, Heart, Settings } from 'lucide-react';
 
 interface ProfileData {
   name: string;
@@ -426,6 +426,7 @@ export function ProfileEditor() {
                 </p>
               </div>
             )}
+
           </div>
         </div>
 

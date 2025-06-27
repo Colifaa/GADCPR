@@ -270,15 +270,15 @@ export function RegisterForm() {
             <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-600">
               Confirmar Contraseña
             </Label>
-            <Input
-              id="confirmPassword"
+              <Input
+                id="confirmPassword"
               type={showConfirmPassword ? 'text' : 'password'}
-              value={formData.confirmPassword}
-              onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-              placeholder="Confirma tu contraseña"
+                value={formData.confirmPassword}
+                onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                placeholder="Confirma tu contraseña"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-blue-50"
-              required
-            />
+                required
+              />
           </div>
           {/* Selección de tipo de cuenta */}
           <div>

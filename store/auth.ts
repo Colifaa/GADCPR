@@ -20,6 +20,10 @@ interface User {
   credits: number;
   preferences?: UserPreferences;
   hasCompletedOnboarding?: boolean;
+  phone?: string;
+  document?: string;
+  country?: string;
+  subscription?: 'gratuita' | 'paga' | 'equipo';
 }
 
 interface AuthState {
@@ -33,6 +37,7 @@ interface AuthState {
   changePassword: (currentPassword: string, newPassword: string) => Promise<boolean>;
   updateUserPreferences: (preferences: UserPreferences) => Promise<boolean>;
   completeOnboarding: () => Promise<boolean>;
+  updateSubscription: (subscription: 'gratuita' | 'paga' | 'equipo') => Promise<boolean>;
   initializeDefaultUsers: () => void;
 }
 
@@ -72,7 +77,8 @@ const initializeDefaultUsers = () => {
         password: 'password123',
         avatar: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?w=150',
         plan: 'pro',
-        credits: 150
+        credits: 150,
+        subscription: 'paga'
       },
       {
         id: '2',
@@ -80,7 +86,8 @@ const initializeDefaultUsers = () => {
         email: 'jane@example.com',
         password: 'password123',
         plan: 'free',
-        credits: 25
+        credits: 25,
+        subscription: 'gratuita'
       },
       {
         id: 'admin',
@@ -89,7 +96,8 @@ const initializeDefaultUsers = () => {
         password: 'admin123',
         avatar: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?w=150',
         plan: 'admin',
-        credits: 9999
+        credits: 9999,
+        subscription: 'equipo'
       }
     ];
     
@@ -282,6 +290,28 @@ export const useAuthStore = create<AuthState>()(
           }
           
           console.log('✅ Onboarding completado');
+          return true;
+        } else {
+          console.log('❌ Usuario no autenticado');
+          return false;
+        }
+      },
+
+      updateSubscription: async (subscription: 'gratuita' | 'paga' | 'equipo') => {
+        const currentUser = get().user;
+        if (currentUser) {
+          const updatedUser = { ...currentUser, subscription };
+          set({ user: updatedUser });
+          
+          // También actualizar en la base de datos local
+          const users = getLocalUsers();
+          const userIndex = users.findIndex((u: any) => u.id === currentUser.id);
+          if (userIndex !== -1) {
+            users[userIndex] = { ...users[userIndex], subscription };
+            saveLocalUsers(users);
+          }
+          
+          console.log('✅ Suscripción actualizada a:', subscription);
           return true;
         } else {
           console.log('❌ Usuario no autenticado');

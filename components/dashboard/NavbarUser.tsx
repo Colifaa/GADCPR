@@ -3,6 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { Bell, User, LogOut, Search, FileText, FolderOpen, CheckCircle, AlertCircle, Info } from "lucide-react"
+import { useAuthStore } from '@/store/auth'
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -65,6 +66,7 @@ const getNotificationIcon = (type: string) => {
 }
 
 export default function NavbarUser() {
+  const { user } = useAuthStore()
   const [unreadCount, setUnreadCount] = React.useState(notifications.filter((n) => !n.read).length)
 
   const handleMarkAsRead = (id: number) => {
@@ -174,9 +176,9 @@ export default function NavbarUser() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="relative">
                   <Avatar className="h-7 w-7">
-                    <AvatarImage src="/placeholder.svg?height=32&width=32" alt="Usuario" />
+                    <AvatarImage src={user?.avatar} alt={user?.name || "Usuario"} />
                     <AvatarFallback>
-                      <User className="h-4 w-4" />
+                      {user?.name ? user.name.charAt(0).toUpperCase() : <User className="h-4 w-4" />}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
@@ -184,9 +186,11 @@ export default function NavbarUser() {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>Mi cuenta</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Perfil</span>
+                <DropdownMenuItem asChild>
+                  <Link href="/dashboard/profile">
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Mi Perfil</span>
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <FolderOpen className="mr-2 h-4 w-4" />

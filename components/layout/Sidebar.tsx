@@ -15,8 +15,7 @@ import {
   Settings,
   LogOut,
   Sparkles,
-  Shield,
-  User
+  Shield
 } from 'lucide-react';
 import Image from 'next/image';
 
@@ -25,7 +24,6 @@ const navigation = [
   { name: 'Contenido', href: '/content', icon: FileText },
   { name: 'Análisis', href: '/analytics', icon: BarChart3 },
   { name: 'Facturación', href: '/billing', icon: CreditCard },
-  { name: 'Mi Perfil', href: '/dashboard/profile', icon: User },
   { name: 'Configuración', href: '/settings', icon: Settings },
 ];
 

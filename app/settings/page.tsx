@@ -11,17 +11,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuthStore } from '@/store/auth';
 import { useSettingsStore } from '@/store/settings';
-import { User, Bell, Palette, Zap, Save, Settings2 } from 'lucide-react';
+import { User, Bell, Zap, Save, Settings2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { PreferencesSetup, UserPreferences } from '@/components/auth/PreferencesSetup';
 
 export default function SettingsPage() {
   const { user, updateUser, updateUserPreferences } = useAuthStore();
   const { 
-    theme, 
     notifications, 
     generation, 
-    setTheme, 
     updateNotifications, 
     updateGeneration 
   } = useSettingsStore();
@@ -129,36 +127,7 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        {/* Appearance Settings */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Palette className="h-5 w-5" />
-              <span>Appearance</span>
-            </CardTitle>
-            <CardDescription>
-              Customize how the interface looks and feels
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Theme</Label>
-              <Select value={theme} onValueChange={(value: any) => setTheme(value)}>
-                <SelectTrigger className="w-48">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="light">Light</SelectItem>
-                  <SelectItem value="dark">Dark</SelectItem>
-                  <SelectItem value="system">System</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-gray-600 dark:text-gray-400">
-                Choose your preferred theme or sync with system
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+
 
         {/* Notification Settings */}
         <Card>

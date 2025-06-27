@@ -16,12 +16,10 @@ interface GenerationSettings {
 }
 
 interface SettingsState {
-  theme: 'light' | 'dark' | 'system';
   notifications: NotificationSettings;
   generation: GenerationSettings;
   
   // Actions
-  setTheme: (theme: 'light' | 'dark' | 'system') => void;
   updateNotifications: (settings: Partial<NotificationSettings>) => void;
   updateGeneration: (settings: Partial<GenerationSettings>) => void;
 }
@@ -29,7 +27,6 @@ interface SettingsState {
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
-      theme: 'system',
       notifications: {
         email: true,
         push: true,
@@ -42,8 +39,6 @@ export const useSettingsStore = create<SettingsState>()(
         autoSchedule: false,
         preferredTime: '09:00'
       },
-      
-      setTheme: (theme) => set({ theme }),
       
       updateNotifications: (settings) =>
         set((state) => ({

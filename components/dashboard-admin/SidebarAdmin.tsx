@@ -9,36 +9,26 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuthStore } from '@/store/auth';
 import { useSettingsStore } from '@/store/settings';
 import {
-  Home,
   BarChart3,
-  FileText,
   CreditCard,
   Settings,
   LogOut,
   Sun,
   Moon,
   Monitor,
-  Sparkles,
   Shield,
   User
 } from 'lucide-react';
-import Image from 'next/image';
 
 const navigation = [
-  { name: 'Panel Principal', href: '/dashboard', icon: Home },
-  { name: 'Contenido', href: '/content', icon: FileText },
-  { name: 'Análisis', href: '/analytics', icon: BarChart3 },
-  { name: 'Facturación', href: '/billing', icon: CreditCard },
-  { name: 'Mi Perfil', href: '/dashboard/profile', icon: User },
-  { name: 'Configuración', href: '/settings', icon: Settings },
+  { name: 'Panel Principal', href: '/admin', icon: Shield },
+  { name: 'Métricas', href: '/admin/metricas', icon: BarChart3 },
+  { name: 'Pagos', href: '/admin/pagos', icon: CreditCard },
+  { name: 'Gestión', href: '/admin/gestion', icon: Settings },
+  { name: 'Mi Perfil', href: '/admin/profile', icon: User },
 ];
 
-// Admin navigation - only shown to admin users
-const adminNavigation = [
-  { name: 'Panel de Administración', href: '/admin', icon: Shield },
-];
-
-export function Sidebar() {
+export function SidebarAdmin() {
   const pathname = usePathname();
   const { user, logout } = useAuthStore();
   const { theme, setTheme } = useSettingsStore();
@@ -85,20 +75,23 @@ export function Sidebar() {
                 {user.name}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                <span className="px-1.5 py-0.5 bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400 text-xs rounded-full capitalize">
-                  Plan {user.plan}
+                <span className="px-1.5 py-0.5 bg-cyan-100 text-cyan-800 dark:bg-cyan-900/20 dark:text-cyan-400 text-xs rounded-full">
+                  Admin
                 </span>
-                {isAdmin && (
-                  <span className="ml-1 px-1.5 py-0.5 bg-red-100 text-red-800 text-xs rounded-full">
-                    Admin
-                  </span>
-                )}
+              </p>
+              <p className="text-xs text-cyan-600 dark:text-cyan-400 mt-1">
+                Panel de Administración
               </p>
             </div>
           </div>
         ) : (
           <div className="flex items-center space-x-2 w-full justify-center">
-            <Image src="/logo_scrito.svg" alt="Logo" width={128} height={128} />
+            <div className="w-8 h-8 bg-gradient-to-r from-cyan-400 to-teal-500 rounded-lg flex items-center justify-center">
+              <Shield className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-xl font-bold bg-gradient-to-r from-cyan-600 to-teal-600 bg-clip-text text-transparent">
+              scrito Admin
+            </span>
           </div>
         )}
       </div>
@@ -114,7 +107,7 @@ export function Sidebar() {
               className={cn(
                 'flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors',
                 isActive
-                  ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
+                  ? 'bg-cyan-50 text-cyan-700 dark:bg-cyan-900/20 dark:text-cyan-400'
                   : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
               )}
             >
@@ -124,38 +117,10 @@ export function Sidebar() {
           );
         })}
 
-        {/* Admin Navigation */}
-        {isAdmin && (
-          <>
-            <div className="border-t border-gray-200 dark:border-gray-700 my-4"></div>
-            <div className="px-3 py-2">
-              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Administración
-              </p>
-            </div>
-            {adminNavigation.map((item) => {
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={cn(
-                    'flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors',
-                    isActive
-                      ? 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400'
-                      : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
-                  )}
-                >
-                  <item.icon className="mr-3 h-5 w-5" />
-                  {item.name}
-                </Link>
-              );
-            })}
-          </>
-        )}
+
       </nav>
 
-      {/* Action buttons section */}
+      {/* Logout section */}
       <div className="p-4 border-t border-gray-200 dark:border-gray-700">
         <div className="flex space-x-2">
           <Button

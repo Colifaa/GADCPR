@@ -4,23 +4,28 @@ import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
 import { useSettingsStore } from '@/store/settings';
-import { Sidebar } from './Sidebar';
-import NavbarUser from '../dashboard/NavbarUser';
+import { SidebarAdmin } from '../dashboard-admin/SidebarAdmin';
+import NavbarAdmin from '../dashboard-admin/NavbarAdmin';
 
-interface DashboardLayoutProps {
+interface DashboardAdminLayoutProps {
   children: React.ReactNode;
 }
 
-export function DashboardLayout({ children }: DashboardLayoutProps) {
-  const { isAuthenticated } = useAuthStore();
+export function DashboardAdminLayout({ children }: DashboardAdminLayoutProps) {
+  const { isAuthenticated, user } = useAuthStore();
   const { theme } = useSettingsStore();
   const router = useRouter();
+
+  // Check if user is admin
+  const isAdmin = user?.email === 'admin@contentai.com' || user?.plan === 'admin';
 
   useEffect(() => {
     if (!isAuthenticated) {
       router.push('/auth/login');
+    } else if (!isAdmin) {
+      router.push('/dashboard'); // Redirect non-admin users to regular dashboard
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, isAdmin, router]);
 
   useEffect(() => {
     // Apply theme to document
@@ -35,19 +40,19 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     }
   }, [theme]);
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !isAdmin) {
     return null; // or a loading spinner
   }
 
   return (
     <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900">
-      <NavbarUser />
+      <NavbarAdmin />
       <div className="flex flex-1">
-        <Sidebar />
+        <SidebarAdmin />
         <main className="flex-1 overflow-auto">
           {children}
         </main>
       </div>
     </div>
   );
-}
+} 

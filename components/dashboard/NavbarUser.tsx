@@ -116,10 +116,10 @@ export default function NavbarUser({ sidebarOpen, toggleSidebar, isMobile }: Nav
             <div className="flex items-center space-x-6 xl:space-x-8 2xl:space-x-12">
               <Link
                 href="/selecciones"
-                className="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors duration-200 hover:bg-gray-50 rounded-md"
+                className="text-gray-600 hover:text-gray-900 px-3 py-2 flex items-center space-x-2 text-sm font-medium transition-colors duration-200 hover:bg-gray-50 rounded-md"
               >
                 <FileText className="h-4 w-4" />
-                <span>Contenido</span>
+                <span>Seleccion</span>
               </Link>
               <Link
                 href="/analytics"

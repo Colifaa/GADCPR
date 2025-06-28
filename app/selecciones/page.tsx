@@ -1,11 +1,10 @@
 import { PodcastSelection } from '@/components/dashboard/PodcastSelection';
-import NavbarUser from '@/components/dashboard/NavbarUser';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
 
 export default function SeleccionesPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <NavbarUser />
+    <DashboardLayout>
       <PodcastSelection />
-    </div>
+    </DashboardLayout>
   );
 } 

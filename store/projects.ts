@@ -31,6 +31,7 @@ export interface Project {
     type: string
     tone: string
     style: string
+    music?: string  // ID de la música seleccionada
   } // Para contenido de redes sociales (usa parámetros URL)
   linkedScriptId?: string  // Para guiones de video (usa ID específico)
 }
@@ -41,7 +42,8 @@ interface ProjectsStore {
   removeProject: (id: string) => void
   updateProject: (id: string, updates: Partial<Project>) => void
   clearProjects: () => void
-  linkContentToProject: (projectId: string, content?: { type: string, tone: string, style: string }, scriptId?: string) => void
+  linkContentToProject: (projectId: string, content?: { type: string, tone: string, style: string, music?: string }, scriptId?: string) => void
+  migrateProjects: () => void
 }
 
 export const useProjectsStore = create<ProjectsStore>()(
@@ -202,6 +204,19 @@ export const useProjectsStore = create<ProjectsStore>()(
               ? { ...p, linkedContent: content, linkedScriptId: scriptId }
               : p
           )
+        }))
+      },
+
+      // Función para migrar proyectos existentes (agregar campo music si no existe)
+      migrateProjects: () => {
+        set((state) => ({
+          projects: state.projects.map(p => ({
+            ...p,
+            linkedContent: p.linkedContent ? {
+              ...p.linkedContent,
+              music: p.linkedContent.music || undefined
+            } : undefined
+          }))
         }))
       },
     }),

@@ -41,7 +41,23 @@ export function LoginForm() {
           router.push('/dashboard');
         }
       } else {
-        setError('Credenciales incorrectas. Por favor, verifica tu email y contraseña.');
+        // Verificar si el usuario existe pero está baneado
+        const users = JSON.parse(localStorage.getItem('users-db') || '[]');
+        const user = users.find((u: any) => u.email === email);
+        
+        if (user) {
+          if (user.status === 'suspended') {
+            setError('Tu cuenta ha sido suspendida por el administrador. Contacta al soporte para más información.');
+          } else if (user.status === 'inactive') {
+            setError('Tu cuenta está inactiva. Contacta al administrador para reactivarla.');
+          } else if (user.status === 'pending') {
+            setError('Tu cuenta está pendiente de aprobación. Por favor espera la confirmación del administrador.');
+          } else {
+            setError('Contraseña incorrecta. Por favor, verifica tu contraseña.');
+          }
+        } else {
+          setError('No existe una cuenta con este email. Por favor verifica o crea una nueva cuenta.');
+        }
       }
     } catch (err) {
       console.error('Error en login:', err);

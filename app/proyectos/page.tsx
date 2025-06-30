@@ -1,11 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, ImageIcon, Trash2 } from "lucide-react"
+import { Search, ImageIcon, Trash2, Music } from "lucide-react"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { useProjectsStore, Project } from "@/store/projects"
 import { useGeneratedContentStore } from "@/store/generated-content"
@@ -16,9 +16,14 @@ export default function ProjectsPage() {
   const [dateFilter, setDateFilter] = useState("")
   const router = useRouter()
 
-  const { projects, removeProject } = useProjectsStore()
+  const { projects, removeProject, migrateProjects } = useProjectsStore()
   const { contents: generatedContents } = useGeneratedContentStore()
   const { scripts: videoScripts } = useVideoScriptsStore()
+
+  // Migrar proyectos existentes una vez
+  useEffect(() => {
+    migrateProjects()
+  }, [])
 
   const filteredProjects = projects.filter(
     (project: Project) =>
@@ -33,6 +38,10 @@ export default function ProjectsPage() {
   }
 
   const handleViewAnalysis = (project: Project) => {
+    // Debug: mostrar información del proyecto
+    console.log('Proyecto seleccionado:', project.title)
+    console.log('Contenido vinculado:', project.linkedContent)
+    
     // Verificar si este proyecto tiene un guión vinculado
     if (project.linkedScriptId) {
       router.push(`/generated-content/scripts/${project.linkedScriptId}`)
@@ -46,6 +55,16 @@ export default function ProjectsPage() {
         tone: project.linkedContent.tone,
         style: project.linkedContent.style
       })
+      
+      // Agregar música si está disponible
+      if (project.linkedContent.music) {
+        console.log('Música encontrada:', project.linkedContent.music)
+        params.set('music', project.linkedContent.music)
+      } else {
+        console.log('No se encontró música en el proyecto')
+      }
+      
+      console.log('URL generada:', `/generated-content/social?${params.toString()}`)
       router.push(`/generated-content/social?${params.toString()}`)
       return
     }
@@ -61,8 +80,8 @@ export default function ProjectsPage() {
       const latestContent = generatedContents[0]
       const params = new URLSearchParams({
         type: latestContent.type,
-        tone: latestContent.tone,
-        style: latestContent.style
+        tone: latestContent.tone || 'amigable',
+        style: latestContent.style || 'educativos'
       })
       router.push(`/generated-content/social?${params.toString()}`)
     } else {
@@ -135,6 +154,12 @@ export default function ProjectsPage() {
                   <div className="flex items-center gap-4 text-sm text-gray-600">
                     <span>Duración: {project.duration}</span>
                     <span>Número de oyentes: {project.listeners}</span>
+                    {project.linkedContent?.music && (
+                      <div className="flex items-center gap-1 text-green-600 font-medium">
+                        <Music className="w-4 h-4" />
+                        <span>Con música</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-3">

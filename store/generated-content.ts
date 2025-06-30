@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { useUserImagesStore } from './user-images';
 
 export type ContentType = 'texto' | 'imagenes' | 'videos' | 'gif' | 'infografias' | 'presentaciones';
 
@@ -117,11 +118,51 @@ export const useGeneratedContentStore = create<GeneratedContentStore>((set, get)
     // Simular delay de generación
     await new Promise(resolve => setTimeout(resolve, 2000));
     
+    // Obtener imágenes del usuario
+    const userImages = useUserImagesStore.getState().images;
+    const userImageUrls = userImages.map(img => img.url);
+    
+    // Crear contenido personalizado con las imágenes del usuario
+    const customData = { ...mockContents[type] };
+    
+    // Para tipos de contenido que usan imágenes, usar las del usuario
+    if (type === 'imagenes' && userImageUrls.length > 0) {
+      customData.images = userImageUrls.slice(0, 3); // Máximo 3 imágenes
+      customData.captions = userImageUrls.slice(0, 3).map((_, index) => 
+        `Slide ${index + 1} - Basado en tu imagen personalizada`
+      );
+    }
+    
+    if (type === 'videos' && userImageUrls.length > 0) {
+      customData.thumbnail = userImageUrls[0]; // Usar primera imagen como thumbnail
+    }
+    
+    if (type === 'gif' && userImageUrls.length > 0) {
+      customData.thumbnail = userImageUrls[0];
+    }
+    
+    if (type === 'infografias' && userImageUrls.length > 0) {
+      customData.imageUrl = userImageUrls[0];
+    }
+    
+    if (type === 'presentaciones' && userImageUrls.length > 0) {
+      // Agregar imágenes a algunas diapositivas
+      customData.slides = customData.slides.map((slide: any, index: number) => {
+        if (index > 0 && index < customData.slides.length - 1 && userImageUrls[index - 1]) {
+          return {
+            ...slide,
+            image: userImageUrls[index - 1]
+          };
+        }
+        return slide;
+      });
+    }
+    
     const newContent: GeneratedContent = {
       id: `content-${Date.now()}`,
       type,
       title: getContentTitle(type),
-      data: mockContents[type],
+      data: customData,
       createdAt: new Date(),
       tone,
       style

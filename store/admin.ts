@@ -637,6 +637,23 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         user.id === userId ? { ...user, status } : user
       )
     });
+    
+    // Sincronizar con la base de datos de autenticación
+    try {
+      const authUsers = JSON.parse(localStorage.getItem('users-db') || '[]');
+      const updatedAuthUsers = authUsers.map((user: any) => {
+        // Buscar por email ya que puede que los IDs no coincidan
+        const adminUser = users.find(u => u.email === user.email);
+        if (adminUser && adminUser.id === userId) {
+          return { ...user, status };
+        }
+        return user;
+      });
+      localStorage.setItem('users-db', JSON.stringify(updatedAuthUsers));
+      console.log('✅ Estado de usuario sincronizado con base de datos de autenticación');
+    } catch (error) {
+      console.error('❌ Error al sincronizar estado de usuario:', error);
+    }
   },
   
   deleteUser: (userId) => {

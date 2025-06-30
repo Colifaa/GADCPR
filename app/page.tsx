@@ -1,5 +1,6 @@
 import Navbar from '@/components/landing/navbar/navbar';
 import Footer from '@/components/landing/footer/footer';
+import N8NChatWidget from '@/components/landing/chatbot/N8NChatWidget';
 import Image from 'next/image';
 
 export default function HomePage() {
@@ -44,6 +45,9 @@ export default function HomePage() {
         />
       </main>
       <Footer />
+      
+      {/* Chatbot Widget */}
+      <N8NChatWidget />
     </div>
   );
 }

@@ -48,16 +48,73 @@ const TextContent = ({ data }: { data: any }) => (
 );
 
 // Componente para mostrar imágenes
-const ImageContent = ({ data }: { data: any }) => {
+const ImageContent = ({ data, musicUrl }: { data: any; musicUrl?: string }) => {
   const [currentImage, setCurrentImage] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
+
+  const handlePlayPause = () => {
+    if (!musicUrl) return;
+
+    if (isPlaying) {
+      if (audioElement) {
+        audioElement.pause();
+      }
+      setIsPlaying(false);
+    } else {
+      if (audioElement) {
+        audioElement.play();
+      } else {
+        const audio = new Audio(musicUrl);
+        audio.volume = 0.6;
+        audio.loop = true;
+        
+        audio.play().then(() => {
+          setAudioElement(audio);
+          setIsPlaying(true);
+        }).catch((error) => {
+          console.error('Error al reproducir música:', error);
+        });
+      }
+      setIsPlaying(true);
+    }
+  };
+
+  // Limpiar audio al desmontar
+  useEffect(() => {
+    return () => {
+      if (audioElement) {
+        audioElement.pause();
+        audioElement.currentTime = 0;
+      }
+    };
+  }, [audioElement]);
   
   return (
     <Card className="bg-white shadow-lg rounded-2xl overflow-hidden">
       <CardContent className="p-8">
-        <h3 className="text-lg font-bold mb-6 flex items-center">
-          <ImageIcon className="w-5 h-5 mr-2 text-green-600" />
-          Carousel de Imágenes
-        </h3>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-bold flex items-center">
+            <ImageIcon className="w-5 h-5 mr-2 text-green-600" />
+            Carousel de Imágenes
+            {musicUrl && (
+              <Badge variant="secondary" className="ml-2 bg-green-100 text-green-700">
+                🎵 Con música
+              </Badge>
+            )}
+          </h3>
+          {musicUrl && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePlayPause}
+              className="flex items-center space-x-1"
+            >
+              {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+              <span>{isPlaying ? 'Pausar' : 'Reproducir'}</span>
+            </Button>
+          )}
+        </div>
         <div className="relative">
           <div className="aspect-square bg-gray-100 rounded-xl overflow-hidden mb-4">
             <img 
@@ -91,14 +148,68 @@ const ImageContent = ({ data }: { data: any }) => {
             {data.captions[currentImage]}
           </p>
         </div>
+        {musicUrl && (
+          <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+            <p className="text-sm text-green-700">
+              💡 <strong>Tip:</strong> Usa el botón de reproducir para escuchar la música de fondo que acompañaría tu presentación.
+            </p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
 };
 
 // Componente para mostrar videos
-const VideoContent = ({ data }: { data: any }) => {
+const VideoContent = ({ data, musicUrl }: { data: any; musicUrl?: string }) => {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
+
+  const handlePlayPause = () => {
+    if (!musicUrl) {
+      setIsPlaying(!isPlaying);
+      return;
+    }
+
+    if (isPlaying) {
+      // Pausar
+      if (audioElement) {
+        audioElement.pause();
+      }
+      setIsPlaying(false);
+    } else {
+      // Reproducir
+      if (audioElement) {
+        audioElement.play();
+      } else {
+        const audio = new Audio(musicUrl);
+        audio.volume = 0.7;
+        audio.loop = true;
+        
+        audio.addEventListener('ended', () => {
+          setIsPlaying(false);
+        });
+
+        audio.play().then(() => {
+          setAudioElement(audio);
+          setIsPlaying(true);
+        }).catch((error) => {
+          console.error('Error al reproducir música:', error);
+        });
+      }
+      setIsPlaying(true);
+    }
+  };
+
+  // Limpiar audio al desmontar
+  useEffect(() => {
+    return () => {
+      if (audioElement) {
+        audioElement.pause();
+        audioElement.currentTime = 0;
+      }
+    };
+  }, [audioElement]);
   
   return (
     <Card className="bg-white shadow-lg rounded-2xl overflow-hidden">
@@ -106,6 +217,11 @@ const VideoContent = ({ data }: { data: any }) => {
         <h3 className="text-lg font-bold mb-6 flex items-center">
           <Video className="w-5 h-5 mr-2 text-purple-600" />
           Video Generado
+          {musicUrl && (
+            <Badge variant="secondary" className="ml-2 bg-green-100 text-green-700">
+              🎵 Con música
+            </Badge>
+          )}
         </h3>
         <div className="relative aspect-video bg-gray-900 rounded-xl overflow-hidden mb-4">
           <img 
@@ -116,8 +232,8 @@ const VideoContent = ({ data }: { data: any }) => {
           <div className="absolute inset-0 flex items-center justify-center">
             <Button 
               size="lg"
-              className="bg-white/20 backdrop-blur-sm hover:bg-white/30"
-              onClick={() => setIsPlaying(!isPlaying)}
+              className="bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-all duration-200"
+              onClick={handlePlayPause}
             >
               {isPlaying ? <Pause className="w-8 h-8" /> : <Play className="w-8 h-8" />}
             </Button>
@@ -125,8 +241,20 @@ const VideoContent = ({ data }: { data: any }) => {
           <div className="absolute bottom-4 right-4 bg-black/70 text-white px-2 py-1 rounded text-sm">
             {data.duration}
           </div>
+          {musicUrl && isPlaying && (
+            <div className="absolute top-4 right-4 bg-green-500/80 text-white px-2 py-1 rounded text-xs flex items-center">
+              🎵 Reproduciendo música
+            </div>
+          )}
         </div>
         <p className="text-sm text-gray-600">{data.description}</p>
+        {musicUrl && (
+          <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+            <p className="text-sm text-green-700">
+              💡 <strong>Tip:</strong> Haz clic en ▶️ para escuchar cómo sonaría tu video con la música de fondo seleccionada.
+            </p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -162,7 +290,31 @@ const InfografiaContent = ({ data }: { data: any }) => (
       <h3 className="text-lg font-bold mb-6 flex items-center">
         <BarChart3 className="w-5 h-5 mr-2 text-red-600" />
         {data.title}
+        {data.imageUrl && (
+          <Badge variant="secondary" className="ml-2 bg-green-100 text-green-700">
+            🖼️ Con imagen personalizada
+          </Badge>
+        )}
       </h3>
+      
+      {/* Imagen personalizada si existe */}
+      {data.imageUrl && (
+        <div className="mb-6">
+          <div className="relative aspect-video bg-gray-100 rounded-xl overflow-hidden">
+            <img 
+              src={data.imageUrl} 
+              alt="Imagen de referencia para infografía"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+              <div className="bg-white/90 backdrop-blur-sm rounded-lg p-3">
+                <p className="text-sm font-medium text-gray-800">Imagen base para tu infografía</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <div className="space-y-4">
         {data.sections.map((section: any, index: number) => (
           <div key={index} className="border-l-4 border-blue-500 pl-4 py-2">
@@ -171,6 +323,14 @@ const InfografiaContent = ({ data }: { data: any }) => (
           </div>
         ))}
       </div>
+      
+      {data.imageUrl && (
+        <div className="mt-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-sm text-blue-700">
+            💡 <strong>Tip:</strong> Esta imagen se usará como referencia visual para crear tu infografía final.
+          </p>
+        </div>
+      )}
     </CardContent>
   </Card>
 );
@@ -205,13 +365,32 @@ const PresentacionContent = ({ data }: { data: any }) => {
              
              {/* Slide central - responsive */}
              <div className="relative flex-shrink-0">
-               <div className="w-72 sm:w-80 lg:w-96 h-48 sm:h-56 lg:h-64 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl border-2 border-blue-200 shadow-lg p-4 sm:p-6 flex flex-col justify-center">
-                 <h4 className="text-base sm:text-lg font-bold text-gray-800 mb-2 sm:mb-3 text-center">
-                   {data.slides[currentSlide]?.title}
-                 </h4>
-                 <p className="text-xs sm:text-sm text-gray-600 text-center leading-relaxed">
-                   {data.slides[currentSlide]?.content}
-                 </p>
+               <div className="w-72 sm:w-80 lg:w-96 h-48 sm:h-56 lg:h-64 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl border-2 border-blue-200 shadow-lg p-4 sm:p-6 flex flex-col justify-center relative overflow-hidden">
+                 {/* Imagen de fondo si existe */}
+                 {data.slides[currentSlide]?.image && (
+                   <div className="absolute inset-0 opacity-20">
+                     <img 
+                       src={data.slides[currentSlide].image} 
+                       alt="Slide background"
+                       className="w-full h-full object-cover"
+                     />
+                   </div>
+                 )}
+                 <div className="relative z-10">
+                   <h4 className="text-base sm:text-lg font-bold text-gray-800 mb-2 sm:mb-3 text-center">
+                     {data.slides[currentSlide]?.title}
+                   </h4>
+                   <p className="text-xs sm:text-sm text-gray-600 text-center leading-relaxed">
+                     {data.slides[currentSlide]?.content}
+                   </p>
+                   {data.slides[currentSlide]?.image && (
+                     <div className="mt-2 text-center">
+                       <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
+                         🖼️ Con imagen personalizada
+                       </Badge>
+                     </div>
+                   )}
+                 </div>
                </div>
              </div>
              
@@ -313,6 +492,37 @@ export default function GeneratedContentPage() {
   const contentType = (searchParams.get('type') as ContentType) || 'texto';
   const tone = searchParams.get('tone') || 'amigable';
   const style = searchParams.get('style') || 'educativos';
+  const musicId = searchParams.get('music');
+
+  // Música disponible (debe coincidir con ContentGeneratorAdvanced)
+  const backgroundMusic = [
+    {
+      id: 'upbeat_corporate',
+      name: 'Corporate Success',
+      url: '/audio/corporate_success.mp3',
+      duration: '1:32',
+      genre: 'Corporate',
+      mood: 'Energético'
+    },
+    {
+      id: 'smooth_jazz',
+      name: 'Jazz Cafe Vibes',
+      url: '/audio/beepage_jazz.mp3',
+      duration: '2:10',
+      genre: 'Jazz',
+      mood: 'Relajante'
+    },
+    {
+      id: 'electronic_beat',
+      name: 'Electronic Dreams',
+      url: '/audio/technoscape_electronic.mp3',
+      duration: '1:39',
+      genre: 'Electronic',
+      mood: 'Moderno'
+    }
+  ];
+
+  const selectedMusic = musicId ? backgroundMusic.find(m => m.id === musicId) : null;
 
   useEffect(() => {
     const loadContent = async () => {
@@ -358,13 +568,15 @@ export default function GeneratedContentPage() {
   const renderContent = () => {
     if (!currentContent) return null;
 
+    const musicUrl = selectedMusic?.url;
+
     switch (currentContent.type) {
       case 'texto':
         return <TextContent data={currentContent.data} />;
       case 'imagenes':
-        return <ImageContent data={currentContent.data} />;
+        return <ImageContent data={currentContent.data} musicUrl={musicUrl} />;
       case 'videos':
-        return <VideoContent data={currentContent.data} />;
+        return <VideoContent data={currentContent.data} musicUrl={musicUrl} />;
       case 'gif':
         return <GifContent data={currentContent.data} />;
       case 'infografias':
@@ -407,6 +619,11 @@ export default function GeneratedContentPage() {
             <Badge variant="outline" className="border-purple-200 text-purple-700">
               Estilo: {style}
             </Badge>
+            {selectedMusic && (contentType === 'videos' || contentType === 'imagenes') && (
+              <Badge variant="outline" className="border-green-200 text-green-700 bg-green-50">
+                🎵 Música: {selectedMusic.name}
+              </Badge>
+            )}
             <span className="flex items-center">
               <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
               Generado {currentContent?.createdAt.toLocaleDateString()}

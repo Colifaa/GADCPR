@@ -25,6 +25,7 @@ interface User {
   country?: string;
   subscription?: 'gratuita' | 'paga' | 'equipo';
   role: 'user' | 'admin';
+  status?: 'active' | 'inactive' | 'suspended' | 'pending';
 }
 
 interface AuthState {
@@ -79,7 +80,9 @@ const initializeDefaultUsers = () => {
         avatar: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?w=150',
         plan: 'pro',
         credits: 150,
-        subscription: 'paga'
+        subscription: 'paga',
+        status: 'active',
+        role: 'user'
       },
       {
         id: '2',
@@ -88,7 +91,9 @@ const initializeDefaultUsers = () => {
         password: 'password123',
         plan: 'free',
         credits: 25,
-        subscription: 'gratuita'
+        subscription: 'gratuita',
+        status: 'active',
+        role: 'user'
       },
       {
         id: 'admin',
@@ -98,7 +103,9 @@ const initializeDefaultUsers = () => {
         avatar: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?w=150',
         plan: 'admin',
         credits: 9999,
-        subscription: 'equipo'
+        subscription: 'equipo',
+        status: 'active',
+        role: 'admin'
       }
     ];
     
@@ -133,6 +140,17 @@ export const useAuthStore = create<AuthState>()(
         
         if (user) {
           console.log('👤 Usuario encontrado:', { ...user, password: '***' });
+          
+          // Verificar si la cuenta está suspendida o inactiva
+          if (user.status === 'suspended') {
+            console.log('🚫 Cuenta suspendida por el administrador');
+            return false;
+          }
+          
+          if (user.status === 'inactive') {
+            console.log('⏸️ Cuenta inactiva');
+            return false;
+          }
           
           if (user.password === password) {
             // Convertir el usuario a la interfaz User (sin password)
@@ -171,7 +189,8 @@ export const useAuthStore = create<AuthState>()(
           nickname,
           plan: (role === 'admin' ? 'admin' : 'free') as 'free' | 'pro' | 'enterprise' | 'admin',
           role: role || 'user',
-          credits: 50
+          credits: 50,
+          status: 'active' as 'active' | 'inactive' | 'suspended' | 'pending'
         };
         users.push(newUserWithPassword);
         const saved = saveLocalUsers(users);

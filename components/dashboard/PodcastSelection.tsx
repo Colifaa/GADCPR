@@ -5,18 +5,21 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ExternalLink, Search, Music, Play, Pause, Volume2, Maximize2, MoreHorizontal, Clock, Users, Star, ChevronLeft, ChevronRight, BarChart3, TrendingUp, Activity } from 'lucide-react';
+import { ExternalLink, Search, Music, Play, Pause, Volume2, Maximize2, MoreHorizontal, Clock, Users, Star, ChevronLeft, ChevronRight, BarChart3, TrendingUp, Activity, Filter, SortAsc, SortDesc } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { usePodcastStore, type Episode, type Review, type PodcastData } from '@/store/podcasts';
 import { usePodcastAnalysisStore } from '@/store/podcastanalysis';
+import { useHistoryStore } from '@/store/history';
+import { useProjectsStore } from '@/store/projects';
 
 export function PodcastSelection() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
   const [showAnalysisView, setShowAnalysisView] = useState(false);
   const [showEpisodesView, setShowEpisodesView] = useState(false);
   const [showReviewsView, setShowReviewsView] = useState(false);
-
+  const [showCategoryFilter, setShowCategoryFilter] = useState(false);
 
   // Función para formatear tiempo en formato MM:SS
   const formatTime = (seconds: number): string => {
@@ -59,14 +62,40 @@ export function PodcastSelection() {
     getAnalysisByPodcastId
   } = usePodcastAnalysisStore();
 
-  // Organizar podcasts por categorías desde la base de datos
-  const podcastsByCategory = {
-    marketing: podcastDatabase.filter(p => p.category === 'marketing'),
-    tecnologia: podcastDatabase.filter(p => p.category === 'tecnologia'),
-    emprendimiento: podcastDatabase.filter(p => p.category === 'emprendimiento'),
+  // Store de historial
+  const { addEntry } = useHistoryStore();
+
+  // Store de proyectos
+  const { addProject } = useProjectsStore();
+
+  // Obtener categorías únicas
+  const categories = Array.from(new Set(podcastDatabase.map(p => p.category)));
+
+  // Función para filtrar y ordenar podcasts
+  const getFilteredAndSortedPodcasts = () => {
+    let filtered = podcastDatabase;
+
+    // Filtrar por búsqueda
+    if (searchQuery.trim()) {
+      filtered = filterPodcasts(searchQuery);
+    }
+
+    // Filtrar por categoría
+    if (categoryFilter !== 'all') {
+      filtered = filtered.filter(p => p.category === categoryFilter);
+    }
+
+    // Ordenar por rating (siempre de mayor a menor)
+    filtered = [...filtered].sort((a, b) => {
+      const aRating = a.rating || 0;
+      const bRating = b.rating || 0;
+      return bRating - aRating;
+    });
+
+    return filtered;
   };
 
-  const allPodcasts = podcastDatabase;
+  const filteredPodcasts = getFilteredAndSortedPodcasts();
 
   const handlePodcastClick = (podcast: PodcastData) => {
     if (selectedPodcast?.id === podcast.id) {
@@ -93,23 +122,116 @@ export function PodcastSelection() {
   // Efecto para navegar al análisis completo cuando termine
   useEffect(() => {
     if (currentAnalysis && !isAnalyzing && showAnalysisView && selectedPodcast) {
+      // Guardar en el historial cuando el análisis se complete
+      const historyEntry = {
+        title: `Análisis: ${selectedPodcast.title}`,
+        podcastTitle: selectedPodcast.title,
+        podcastAuthor: selectedPodcast.author || 'Autor desconocido',
+        episodeTitle: selectedEpisode?.title,
+        type: 'podcast' as const,
+        status: 'completed' as const,
+        analysisData: {
+          summary: `Análisis completo del podcast "${selectedPodcast.title}" realizado con éxito.`,
+          keyPoints: [
+            'Análisis de contenido',
+            'Extracción de insights',
+            'Generación de resumen'
+          ],
+          insights: [
+            'Contenido procesado exitosamente',
+            'Datos extraídos para análisis posterior'
+          ],
+          duration: selectedEpisode?.duration || '00:00'
+        }
+      };
+
+      addEntry(historyEntry);
+
+      // Generar contenido mock basado en el podcast y guardarlo en proyectos
+      const generateMockContent = () => {
+        const contentTypes = ['text', 'image', 'video', 'gif', 'infografia', 'presentacion'] as const;
+        const randomType = contentTypes[Math.floor(Math.random() * contentTypes.length)];
+        
+        const contentTemplates = {
+          text: {
+            type: 'text' as const,
+            title: `Post para ${selectedPodcast.category === 'tecnologia' ? 'LinkedIn' : 'Instagram'}`,
+            content: `🎧 Acabo de analizar "${selectedPodcast.title}" y estos son los insights clave:\n\n✨ Puntos destacados:\n• Contenido de calidad sobre ${selectedPodcast.category}\n• Análisis profundo del tema\n• Aplicación práctica inmediata\n\n💡 Reflexión: Este podcast ofrece una perspectiva única sobre ${selectedPodcast.category}.\n\n#Podcast #${selectedPodcast.category} #Aprendizaje #Insights`,
+            description: `Contenido de texto optimizado para redes sociales`
+          },
+          image: {
+            type: 'image' as const,
+            title: `Infografía - ${selectedPodcast.title}`,
+            content: `/api/generated/image/${selectedPodcast.id}`,
+            thumbnail: `/api/generated/thumb/${selectedPodcast.id}`,
+            description: `Infografía con los puntos clave del podcast`
+          },
+          video: {
+            type: 'video' as const,
+            title: `Video Resumen - ${selectedPodcast.title}`,
+            content: `/api/generated/video/${selectedPodcast.id}`,
+            thumbnail: `/api/generated/video-thumb/${selectedPodcast.id}`,
+            description: `Resumen en video del análisis del podcast`
+          },
+          gif: {
+            type: 'gif' as const,
+            title: `GIF Animado - Conceptos Clave`,
+            content: `/api/generated/gif/${selectedPodcast.id}`,
+            thumbnail: `/api/generated/gif-thumb/${selectedPodcast.id}`,
+            description: `Animación con los conceptos principales del podcast`
+          },
+          infografia: {
+            type: 'infografia' as const,
+            title: `Infografía - ${selectedPodcast.title}`,
+            content: `/api/generated/infografia/${selectedPodcast.id}.pdf`,
+            thumbnail: `/api/generated/infografia-thumb/${selectedPodcast.id}`,
+            description: `Infografía detallada con insights del podcast`,
+            format: 'PDF'
+          },
+          presentacion: {
+            type: 'presentacion' as const,
+            title: `Presentación - ${selectedPodcast.title}`,
+            content: `/api/generated/presentacion/${selectedPodcast.id}.pptx`,
+            thumbnail: `/api/generated/presentacion-thumb/${selectedPodcast.id}`,
+            description: `Deck ejecutivo con puntos clave del análisis`,
+            slides: Math.floor(Math.random() * 10) + 8, // Entre 8 y 17 slides
+            format: 'PPTX'
+          }
+        };
+
+        return [contentTemplates[randomType]];
+      };
+
+      // Crear proyecto con el contenido generado
+      const projectData = {
+        title: selectedPodcast.title,
+        episodes: selectedPodcast.episodes?.length || 1,
+        subtitle: `Análisis: Contenido analizado sobre ${selectedPodcast.category}`,
+        duration: selectedEpisode?.duration || '00:00',
+        listeners: Math.floor(Math.random() * 1000) + 100, // Mock listeners
+        date: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' }),
+        podcastTitle: selectedPodcast.title,
+        podcastAuthor: selectedPodcast.author || 'Autor desconocido',
+        episodeTitle: selectedEpisode?.title,
+        generatedContent: generateMockContent()
+      };
+
+      addProject(projectData);
+
       setTimeout(() => {
         router.push('/selecciones/podcast');
       }, 500); // Pequeña pausa para que se vea que terminó
     }
-  }, [currentAnalysis, isAnalyzing, showAnalysisView, selectedPodcast, router]);
+  }, [currentAnalysis, isAnalyzing, showAnalysisView, selectedPodcast, selectedEpisode, router, addEntry, addProject]);
 
   const handleFinalAnalyze = () => {
     router.push('/contents');
   };
 
-  // Reemplazamos el filtrado simple por el helper de la store
-  const filteredPodcasts = searchQuery.trim() ? filterPodcasts(searchQuery) : allPodcasts;
-
-  // Reset podcast page when search changes
+  // Reset podcast page when filters change
   React.useEffect(() => {
     setCurrentPodcastPage(1);
-  }, [searchQuery]);
+  }, [searchQuery, categoryFilter]);
 
   // Funciones de paginado para podcasts
   const totalPodcastPages = Math.ceil(filteredPodcasts.length / podcastsPerPage);
@@ -130,8 +252,6 @@ export function PodcastSelection() {
   const handleReviewPageChange = (pageNumber: number) => {
     setCurrentReviewPage(pageNumber);
   };
-
-
 
   // Componente de paginado mejorado
   const PaginationComponent = ({ 
@@ -220,16 +340,36 @@ export function PodcastSelection() {
     );
   };
 
-  // ----- Funciones de búsqueda simplificadas -----
-  const handleSearchClick = () => {
-    setCurrentPodcastPage(1);
+  // Función para obtener el color de la categoría
+  const getCategoryColor = (category: string) => {
+    const colors = {
+      marketing: 'from-pink-500 to-rose-500',
+      tecnologia: 'from-blue-500 to-cyan-500',
+      emprendimiento: 'from-green-500 to-emerald-500',
+      productividad: 'from-purple-500 to-violet-500',
+      bienestar: 'from-green-400 to-teal-500',
+      finanzas: 'from-yellow-500 to-orange-500',
+    };
+    return colors[category as keyof typeof colors] || 'from-gray-500 to-gray-600';
+  };
+
+  // Función para obtener el color de la categoría actualizada
+  const getCategoryColorUpdated = (category: string) => {
+    const colors = {
+      tecnologia: 'from-blue-500 to-cyan-500',
+      entretenimiento: 'from-purple-500 to-pink-500', 
+      educacion: 'from-green-500 to-emerald-500',
+      noticias: 'from-red-500 to-orange-500',
+      otro: 'from-gray-500 to-gray-600',
+    };
+    return colors[category as keyof typeof colors] || 'from-gray-500 to-gray-600';
   };
 
   return (
     <div className="h-full flex flex-col bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-7xl mx-auto p-6">
+        <div className="max-w-7xl mx-auto p-6 min-h-full flex flex-col">
           
           {/* Vista de Análisis Detallado */}
           {showAnalysisView && selectedPodcast ? (
@@ -282,48 +422,134 @@ export function PodcastSelection() {
                   </h1>
                   <p className="text-gray-600 mt-1">Encuentra y analiza podcasts de tu interés</p>
                 </div>
-                <Button
-                  variant="outline"
-                  onClick={() => router.push('/dashboard')}
-                  className="flex items-center space-x-2 hover:bg-gray-50 transition-colors border-gray-300"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                  <span>Dashboard</span>
-                </Button>
-              </div>
-
-              {/* Search Bar */}
-              <div className="flex items-center space-x-4">
-                <div className="flex-1 relative">
-                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <Input
-                    type="text"
-                    placeholder="Buscar podcasts (nombre, tema, episodio, url, etc.)"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleSearchClick()}
-                    className="pl-12 pr-4 h-12 text-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-xl shadow-sm"
-                  />
-                </div>
-                <Button 
-                  onClick={handleSearchClick}
-                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 h-12 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
-                >
-                  Buscar
-                </Button>
                 {selectedPodcast && (
-                  <div className="flex items-center space-x-2 text-sm text-emerald-600 font-medium bg-emerald-50 px-3 py-2 rounded-lg border border-emerald-200">
+                  <div className="flex items-center space-x-2 text-sm text-emerald-600 font-medium bg-emerald-50 px-4 py-2 rounded-lg border border-emerald-200">
                     <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
                     <span>Podcast seleccionado</span>
                   </div>
                 )}
               </div>
 
-              {/* URL Processing Message */}
-              {/* (Se eliminó la visualización de progreso de URL) */}
+              {/* Search and Filter Controls */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-8">
+                {/* Search Input */}
+                <div className="lg:col-span-8 relative">
+                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <Input
+                    type="text"
+                    placeholder="Buscar podcasts (nombre, tema, autor, etc.)"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-12 pr-4 h-12 text-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-xl shadow-sm"
+                  />
+                </div>
 
-              {/* URL Error Message */}
-              {/* (Se eliminó la visualización de errores de URL) */}
+                {/* Filter Button */}
+                <div className="lg:col-span-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowCategoryFilter(!showCategoryFilter)}
+                    className="flex items-center space-x-2 h-12 w-full border-gray-300 rounded-xl hover:bg-gray-50 transition-all duration-200"
+                  >
+                    <Filter className="w-4 h-4" />
+                    <span>Filtrar por Categoría</span>
+                    {categoryFilter !== 'all' && (
+                      <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                        {categoryFilter === 'tecnologia' ? 'Tecnología' : 
+                         categoryFilter === 'entretenimiento' ? 'Entretenimiento' : 
+                         categoryFilter === 'educacion' ? 'Educación' : 
+                         categoryFilter === 'noticias' ? 'Noticias' : 
+                         'Otro'}
+                      </span>
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Category Filter Dropdown */}
+              {showCategoryFilter && (
+                <div className="mb-6 p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                    <Button
+                      variant={categoryFilter === 'all' ? 'default' : 'outline'}
+                      onClick={() => {
+                        setCategoryFilter('all');
+                        setShowCategoryFilter(false);
+                      }}
+                      className="h-10"
+                    >
+                      Todos
+                    </Button>
+                    <Button
+                      variant={categoryFilter === 'tecnologia' ? 'default' : 'outline'}
+                      onClick={() => {
+                        setCategoryFilter('tecnologia');
+                        setShowCategoryFilter(false);
+                      }}
+                      className="h-10"
+                    >
+                      Tecnología
+                    </Button>
+                    <Button
+                      variant={categoryFilter === 'entretenimiento' ? 'default' : 'outline'}
+                      onClick={() => {
+                        setCategoryFilter('entretenimiento');
+                        setShowCategoryFilter(false);
+                      }}
+                      className="h-10"
+                    >
+                      Entretenimiento
+                    </Button>
+                    <Button
+                      variant={categoryFilter === 'educacion' ? 'default' : 'outline'}
+                      onClick={() => {
+                        setCategoryFilter('educacion');
+                        setShowCategoryFilter(false);
+                      }}
+                      className="h-10"
+                    >
+                      Educación
+                    </Button>
+                    <Button
+                      variant={categoryFilter === 'noticias' ? 'default' : 'outline'}
+                      onClick={() => {
+                        setCategoryFilter('noticias');
+                        setShowCategoryFilter(false);
+                      }}
+                      className="h-10"
+                    >
+                      Noticias
+                    </Button>
+                    <Button
+                      variant={categoryFilter === 'otro' ? 'default' : 'outline'}
+                      onClick={() => {
+                        setCategoryFilter('otro');
+                        setShowCategoryFilter(false);
+                      }}
+                      className="h-10"
+                    >
+                      Otro
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Results Summary */}
+              <div className="flex items-center justify-between">
+                <p className="text-gray-600">
+                  Mostrando {currentPodcasts.length} de {filteredPodcasts.length} podcasts
+                  {categoryFilter !== 'all' && (
+                    <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                      {categoryFilter}
+                    </span>
+                  )}
+                </p>
+                {filteredPodcasts.length > podcastsPerPage && (
+                  <p className="text-sm text-gray-500">
+                    Página {currentPodcastPage} de {totalPodcastPages}
+                  </p>
+                )}
+              </div>
 
               {/* Unified Selected Podcast Preview */}
               {selectedPodcast && (
@@ -347,17 +573,28 @@ export function PodcastSelection() {
                       
                       {/* Podcast Icon */}
                       <div className="flex justify-center">
-                        <div className={`w-20 h-20 bg-gradient-to-br ${
-                          selectedPodcast.category === 'marketing' ? 'from-pink-500 to-rose-500' :
-                          selectedPodcast.category === 'tecnologia' ? 'from-blue-500 to-cyan-500' :
-                          selectedPodcast.category === 'emprendimiento' ? 'from-green-500 to-emerald-500' :
-                          'from-purple-500 to-violet-500'
-                        } rounded-2xl flex items-center justify-center shadow-lg`}>
+                        <div className={`w-20 h-20 bg-gradient-to-br ${getCategoryColorUpdated(selectedPodcast.category)} rounded-2xl flex items-center justify-center shadow-lg`}>
                           <Music className="w-10 h-10 text-white" />
                         </div>
                       </div>
                       
-                      <p className="text-gray-600 text-lg">Preview del Podcast</p>
+                      <div className="space-y-2">
+                        <p className="text-gray-600 text-lg">Preview del Podcast</p>
+                        <p className="text-sm text-gray-500">
+                          por <span className="font-medium">{selectedPodcast.author}</span> • 
+                          <span className="ml-1 capitalize">{selectedPodcast.category}</span>
+                        </p>
+                        <div className="flex items-center justify-center space-x-4 text-sm text-gray-600">
+                          <div className="flex items-center space-x-1">
+                            <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                            <span>{selectedPodcast.rating?.toFixed(1)}</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <Users className="w-4 h-4" />
+                            <span>{selectedPodcast.totalReviews} reseñas</span>
+                          </div>
+                        </div>
+                      </div>
                       
                       {/* Episode Selection */}
                       <div className="bg-white rounded-xl p-4 shadow-sm space-y-3">
@@ -398,57 +635,28 @@ export function PodcastSelection() {
                             disabled={!selectedEpisode?.audioUrl || audioPlayer.isLoading}
                             className="w-10 h-10 p-0 rounded-full border-blue-300 hover:bg-blue-50 disabled:opacity-50"
                           >
-                            {audioPlayer.isLoading || audioPlayer.isBuffering ? (
+                            {audioPlayer.isLoading ? (
                               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
                             ) : isPlaying ? (
-                              <Pause className="w-5 h-5 text-blue-600" />
+                              <Pause className="w-4 h-4 text-blue-600" />
                             ) : (
-                              <Play className="w-5 h-5 text-blue-600" />
+                              <Play className="w-4 h-4 text-blue-600" />
                             )}
                           </Button>
                           
-                          {/* Current Time */}
-                          <span className="text-xs text-gray-500 font-mono min-w-[40px]">
-                            {formatTime(audioPlayer.currentTime)}
-                          </span>
-                          
-                          {/* Progress Bar */}
-                          <div 
-                            className="flex-1 bg-blue-100 rounded-full h-2 cursor-pointer"
-                            onClick={(e) => {
-                              if (audioPlayer.duration) {
-                                const rect = e.currentTarget.getBoundingClientRect();
-                                const x = e.clientX - rect.left;
-                                const percentage = x / rect.width;
-                                const newTime = percentage * audioPlayer.duration;
-                                seekTo(newTime);
-                              }
-                            }}
-                          >
+                          <div className="flex-1 bg-gray-200 rounded-full h-2 relative">
                             <div 
                               className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                              style={{
-                                width: audioPlayer.duration 
-                                  ? `${(audioPlayer.currentTime / audioPlayer.duration) * 100}%`
-                                  : '0%'
-                              }}
+                              style={{ width: `${(audioPlayer.currentTime / audioPlayer.duration) * 100 || 0}%` }}
                             ></div>
                           </div>
                           
-                          {/* Duration */}
-                          <span className="text-xs text-gray-500 font-mono min-w-[40px]">
-                            {formatTime(audioPlayer.duration)}
+                          <span className="text-xs text-gray-500 min-w-[40px]">
+                            {formatTime(audioPlayer.currentTime)} / {formatTime(audioPlayer.duration)}
                           </span>
                           
-                          {/* Volume Control */}
                           <div className="flex items-center space-x-2">
-                            <Volume2 
-                              className="w-5 h-5 text-gray-600 hover:text-gray-800 cursor-pointer transition-colors"
-                              onClick={() => {
-                                const newVolume = audioPlayer.volume > 0 ? 0 : 1;
-                                setVolume(newVolume);
-                              }}
-                            />
+                            <Volume2 className="w-4 h-4 text-gray-400" />
                             <input
                               type="range"
                               min="0"
@@ -459,39 +667,33 @@ export function PodcastSelection() {
                               className="w-16 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                             />
                           </div>
-                          
-                          {/* Playback Speed */}
-                          <select
-                            value={audioPlayer.playbackRate}
-                            onChange={(e) => setPlaybackRate(parseFloat(e.target.value))}
-                            className="text-xs bg-transparent border border-gray-300 rounded px-2 py-1 text-gray-600 hover:text-gray-800"
-                          >
-                            <option value={0.5}>0.5x</option>
-                            <option value={0.75}>0.75x</option>
-                            <option value={1}>1x</option>
-                            <option value={1.25}>1.25x</option>
-                            <option value={1.5}>1.5x</option>
-                            <option value={2}>2x</option>
-                          </select>
-                          
-                          <Maximize2 className="w-5 h-5 text-gray-600 hover:text-gray-800 cursor-pointer transition-colors" />
                         </div>
+                        
+                        {selectedEpisode?.description && (
+                          <p className="text-xs text-gray-600 mt-2">
+                            {selectedEpisode.description}
+                          </p>
+                        )}
                       </div>
                       
                       {/* Action Buttons */}
-                      <div className="flex items-center justify-center space-x-4">
-                        <Button 
-                          variant="outline"
-                          onClick={() => setShowReviewsView(true)}
-                          className="px-6 py-2 border-blue-300 text-blue-600 hover:bg-blue-50"
-                        >
-                          Calificar
-                        </Button>
-                        <Button 
+                      <div className="flex justify-center space-x-4">
+                        <Button
                           onClick={handleAnalyzeClick}
-                          className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-2 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+                          disabled={isAnalyzing}
+                          className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white px-8 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50"
                         >
-                          Analizar Podcast
+                          {isAnalyzing ? (
+                            <div className="flex items-center space-x-2">
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                              <span>Analizando...</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center space-x-2">
+                              <BarChart3 className="w-5 h-5" />
+                              <span>Analizar Podcast</span>
+                            </div>
+                          )}
                         </Button>
                       </div>
                     </div>
@@ -500,100 +702,98 @@ export function PodcastSelection() {
               )}
 
               {/* Podcasts Grid */}
-              <div className="space-y-6">
-                {/* Stats Info */}
-                <div className="flex items-center justify-between">
-                  <div className="text-sm text-gray-600">
-                    Mostrando {indexOfFirstPodcast + 1}-{Math.min(indexOfLastPodcast, filteredPodcasts.length)} de {filteredPodcasts.length} podcasts
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    Página {currentPodcastPage} de {totalPodcastPages}
-                  </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {currentPodcasts.map((podcast) => (
+                    <Card 
+                      key={podcast.id} 
+                      className={`cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-105 border-2 ${
+                        selectedPodcast?.id === podcast.id 
+                          ? 'border-blue-500 bg-blue-50 shadow-lg' 
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                      onClick={() => handlePodcastClick(podcast)}
+                    >
+                      <CardContent className="p-6">
+                        <div className="space-y-4">
+                          {/* Category Badge */}
+                          <div className="flex items-center justify-between">
+                            <span className={`px-2 py-1 text-xs font-medium rounded-full bg-gradient-to-r ${getCategoryColorUpdated(podcast.category)} text-white`}>
+                              {podcast.category === 'tecnologia' ? 'Tecnología' : 
+                               podcast.category === 'entretenimiento' ? 'Entretenimiento' : 
+                               podcast.category === 'educacion' ? 'Educación' : 
+                               podcast.category === 'noticias' ? 'Noticias' : 
+                               'Otro'}
+                            </span>
+                            {selectedPodcast?.id === podcast.id && (
+                              <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                            )}
+                          </div>
+
+                          {/* Podcast Icon */}
+                          <div className="flex justify-center">
+                            <div className={`w-16 h-16 bg-gradient-to-br ${getCategoryColorUpdated(podcast.category)} rounded-xl flex items-center justify-center shadow-md`}>
+                              <Music className="w-8 h-8 text-white" />
+                            </div>
+                          </div>
+
+                          {/* Podcast Info */}
+                          <div className="text-center space-y-2">
+                            <h3 className="font-semibold text-gray-900 text-sm leading-tight line-clamp-2">
+                              {podcast.title}
+                            </h3>
+                            <p className="text-xs text-gray-600">
+                              por {podcast.author}
+                            </p>
+                            
+                            {/* Rating and Reviews */}
+                            <div className="flex items-center justify-center space-x-3 text-sm">
+                              <div className="flex items-center space-x-1">
+                                <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                                <span className="font-medium">{podcast.rating?.toFixed(1)}</span>
+                              </div>
+                              <div className="flex items-center space-x-1 text-gray-500">
+                                <Users className="w-4 h-4" />
+                                <span>{podcast.totalReviews}</span>
+                              </div>
+                            </div>
+
+                            {/* Episodes Count */}
+                            <div className="flex items-center justify-center space-x-1 text-xs text-gray-500">
+                              <Clock className="w-3 h-3" />
+                              <span>{podcast.episodes?.length || 1} episodios</span>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
 
-                                 {/* Podcasts Grid */}
-                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                   {currentPodcasts.map((podcast) => {
-                     const isSelected = selectedPodcast?.id === podcast.id;
-                     const categoryColors = {
-                       marketing: 'from-pink-500 to-rose-500',
-                       tecnologia: 'from-blue-500 to-cyan-500', 
-                       emprendimiento: 'from-green-500 to-emerald-500',
-                       extracted: 'from-purple-500 to-violet-500'
-                     };
-                     
-                     return (
-                       <Card 
-                         key={podcast.id}
-                         className={`group cursor-pointer transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl ${
-                           isSelected 
-                             ? 'bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-300 shadow-lg' 
-                             : 'bg-white hover:bg-gray-50 border border-gray-200 shadow-sm hover:shadow-md'
-                         } rounded-2xl overflow-hidden relative`}
-                         onClick={() => handlePodcastClick(podcast)}
-                       >
-                         <CardContent className="p-5 flex flex-col items-center text-center h-56">
-                           {/* Selection Indicator */}
-                           {isSelected && (
-                             <div className="absolute top-3 right-3 z-10">
-                               <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center shadow-lg">
-                                 <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                 </svg>
-                               </div>
-                             </div>
-                           )}
-                           
-                           {/* Podcast Icon with gradient */}
-                           <div className={`w-16 h-16 bg-gradient-to-br ${categoryColors[podcast.category as keyof typeof categoryColors] || categoryColors.tecnologia} rounded-2xl flex items-center justify-center mb-4 shadow-lg group-hover:shadow-xl transition-shadow duration-300 flex-shrink-0`}>
-                             <Music className="w-8 h-8 text-white" />
-                           </div>
-                           
-                                                        {/* Content Container */}
-                             <div className="flex-1 flex flex-col justify-between w-full">
-                               {/* Podcast Title */}
-                               <div className="mb-3 flex-1 flex items-center justify-center">
-                                 <h3 className="text-sm font-semibold text-gray-900 leading-tight group-hover:text-blue-700 transition-colors line-clamp-3 text-center w-full">
-                                   {podcast.title}
-                                 </h3>
-                               </div>
-                             
-                             {/* Category Badge */}
-                             <div className="flex items-center justify-center">
-                               <span className={`px-3 py-1.5 rounded-full text-white font-medium text-xs shadow-sm ${
-                                 podcast.category === 'marketing' ? 'bg-pink-500' :
-                                 podcast.category === 'tecnologia' ? 'bg-blue-500' :
-                                 podcast.category === 'emprendimiento' ? 'bg-green-500' :
-                                 'bg-purple-500'
-                               }`}>
-                                 {podcast.category === 'marketing' ? 'Marketing' :
-                                  podcast.category === 'tecnologia' ? 'Tecnología' :
-                                  podcast.category === 'emprendimiento' ? 'Emprendimiento' :
-                                  'Extraído'}
-                               </span>
-                             </div>
-                           </div>
-
-                           {/* Hover effect overlay */}
-                           <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl pointer-events-none"></div>
-                         </CardContent>
-                       </Card>
-                     );
-                   })}
-                </div>
-
-                {/* Empty State */}
-                {currentPodcasts.length === 0 && (
-                  <div className="text-center py-16">
-                    <div className="w-24 h-24 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                      <Search className="w-12 h-12 text-gray-400" />
-                    </div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No se encontraron podcasts</h3>
-                    <p className="text-gray-500">Intenta con otros términos de búsqueda</p>
+                              {/* Empty State */}
+              {filteredPodcasts.length === 0 && (
+                <div className="text-center py-12">
+                  <div className="w-24 h-24 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                    <Search className="w-12 h-12 text-gray-400" />
                   </div>
-                )}
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">No se encontraron podcasts</h3>
+                  <p className="text-gray-600 mb-4">
+                    Intenta ajustar tus filtros o términos de búsqueda
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setSearchQuery('');
+                      setCategoryFilter('all');
+                    }}
+                    className="border-gray-300 hover:bg-gray-50"
+                  >
+                    Limpiar filtros
+                  </Button>
+                </div>
+              )}
 
-                {/* Paginado */}
+              {/* Fixed Pagination at Bottom */}
+              <div className="mt-8 pt-6 border-t border-gray-200 bg-white rounded-lg shadow-sm">
                 <PaginationComponent
                   currentPage={currentPodcastPage}
                   totalPages={totalPodcastPages}
@@ -602,140 +802,6 @@ export function PodcastSelection() {
               </div>
             </div>
           )}
-
-          {/* Vista de Episodios */}
-          {showEpisodesView && selectedPodcast && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xl font-semibold">Episodios - {selectedPodcast.title}</h3>
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowEpisodesView(false)}
-                    className="text-sm"
-                  >
-                    ✕
-                  </Button>
-                </div>
-                
-                <div className="space-y-3">
-                  {selectedPodcast.episodes?.map((episode) => (
-                    <div
-                      key={episode.id}
-                      className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
-                      onClick={() => {
-                        setSelectedEpisode(episode);
-                        setShowEpisodesView(false);
-                      }}
-                    >
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-medium text-gray-900">{episode.title}</h4>
-                        <span className="text-sm text-gray-500">{episode.duration}</span>
-                      </div>
-                      <p className="text-sm text-gray-600 mt-1">{episode.description}</p>
-                    </div>
-                  )) || (
-                    <p className="text-gray-500 text-center py-8">No hay episodios disponibles</p>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Vista de Reseñas y Calificaciones */}
-          {showReviewsView && selectedPodcast && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg p-6 w-full max-w-4xl mx-4 h-[85vh] flex flex-col">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xl font-semibold">Reseña, me gusta y calificaciones</h3>
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowReviewsView(false)}
-                    className="text-sm"
-                  >
-                    ✕
-                  </Button>
-                </div>
-
-                {/* Header con Estrategias y Rating - Fijo */}
-                <div className="flex-shrink-0 mb-6">
-                  <h4 className="text-lg font-medium mb-4">Estrategias</h4>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <div key={star} className="text-blue-600 text-xl">★</div>
-                      ))}
-                    </div>
-                    <div className="text-4xl font-bold text-gray-800">
-                      {selectedPodcast.rating || 5.0}
-                    </div>
-                  </div>
-                  
-                  {/* Rating Bars */}
-                  <div className="mt-4 space-y-2">
-                    {[5, 4, 3, 2, 1].map((rating) => (
-                      <div key={rating} className="flex items-center space-x-3">
-                        <span className="text-sm w-2">{rating}</span>
-                        <div className="flex-1 bg-gray-200 rounded-full h-2">
-                          <div 
-                            className="bg-blue-600 h-2 rounded-full" 
-                            style={{ width: rating === 5 ? '100%' : rating === 4 ? '80%' : '60%' }}
-                          ></div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Reviews Grid - Con scroll */}
-                <div className="flex-1 overflow-y-auto">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 min-h-[300px]">
-                    {currentReviews.length > 0 ? currentReviews.map((review) => (
-                      <div key={review.id} className="bg-gray-50 rounded-lg p-4 h-fit">
-                        <div className="flex items-center space-x-3 mb-3">
-                          <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
-                            <span className="text-white font-medium text-sm">
-                              {review.userName.charAt(0)}
-                            </span>
-                          </div>
-                          <div className="flex-1">
-                            <h5 className="font-medium text-gray-900">{review.userName}</h5>
-                            <div className="flex items-center space-x-1">
-                              {[1, 2, 3, 4, 5].map((star) => (
-                                <span 
-                                  key={star} 
-                                  className={`text-sm ${star <= review.rating ? 'text-blue-600' : 'text-gray-300'}`}
-                                >
-                                  ★
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                        <p className="text-sm text-gray-700 mb-2">{review.comment}</p>
-                        <p className="text-xs text-gray-500">Fecha de publicación: {review.date}</p>
-                      </div>
-                    )) : (
-                      <p className="text-gray-500 text-center py-8 col-span-2">No hay reseñas disponibles</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Paginado de reseñas - Fijo en la parte inferior */}
-                {totalReviewPages > 1 && (
-                  <div className="flex-shrink-0 mt-4">
-                    <PaginationComponent
-                      currentPage={currentReviewPage}
-                      totalPages={totalReviewPages}
-                      onPageChange={handleReviewPageChange}
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-
         </div>
       </div>
     </div>

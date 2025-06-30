@@ -1,66 +1,84 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, ImageIcon } from "lucide-react"
-import NavbarUser from "@/components/dashboard/NavbarUser"
-
-interface Project {
-  id: string
-  title: string
-  episodes: number
-  subtitle: string
-  duration: string
-  listeners: number
-  date: string
-}
-
-const mockProjects: Project[] = [
-  {
-    id: "1",
-    title: "Creciendo Juntos",
-    episodes: 3,
-    subtitle: "Subtema principal: Colaboraciones y alianzas estratégicas",
-    duration: "25 mins",
-    listeners: 158,
-    date: "15/08/00",
-  },
-  {
-    id: "2",
-    title: "Nexos Digitales",
-    episodes: 5,
-    subtitle: "Subtema principal: El verdadero valor del engagement",
-    duration: "55 mins",
-    listeners: 258,
-    date: "15/08/00",
-  },
-  {
-    id: "3",
-    title: "Redes que Inspiran",
-    episodes: 4,
-    subtitle: "Subtema principal: Elementos de un contenido inspirador",
-    duration: "48 mins",
-    listeners: 698,
-    date: "15/08/00",
-  },
-]
+import { Search, ImageIcon, Trash2 } from "lucide-react"
+import { DashboardLayout } from "@/components/layout/DashboardLayout"
+import { useProjectsStore, Project } from "@/store/projects"
+import { useGeneratedContentStore } from "@/store/generated-content"
+import { useVideoScriptsStore } from "@/store/video-scripts"
 
 export default function ProjectsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [dateFilter, setDateFilter] = useState("")
+  const router = useRouter()
 
-  const filteredProjects = mockProjects.filter(
-    (project) =>
+  const { projects, removeProject } = useProjectsStore()
+  const { contents: generatedContents } = useGeneratedContentStore()
+  const { scripts: videoScripts } = useVideoScriptsStore()
+
+  const filteredProjects = projects.filter(
+    (project: Project) =>
       project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       project.subtitle.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
+  const handleDeleteProject = (projectId: string) => {
+    if (window.confirm('¿Estás seguro de que quieres eliminar este proyecto? Esta acción no se puede deshacer.')) {
+      removeProject(projectId)
+    }
+  }
+
+  const handleViewAnalysis = (project: Project) => {
+    // Verificar si este proyecto tiene un guión vinculado
+    if (project.linkedScriptId) {
+      router.push(`/generated-content/scripts/${project.linkedScriptId}`)
+      return
+    }
+    
+    // Verificar si este proyecto tiene contenido de redes sociales vinculado
+    if (project.linkedContent) {
+      const params = new URLSearchParams({
+        type: project.linkedContent.type,
+        tone: project.linkedContent.tone,
+        style: project.linkedContent.style
+      })
+      router.push(`/generated-content/social?${params.toString()}`)
+      return
+    }
+    
+    // Fallback: buscar contenido más reciente si no hay vinculación específica
+    if (videoScripts && videoScripts.length > 0) {
+      const latestScript = videoScripts[0]
+      router.push(`/generated-content/scripts/${latestScript.id}`)
+      return
+    }
+    
+    if (generatedContents && generatedContents.length > 0) {
+      const latestContent = generatedContents[0]
+      const params = new URLSearchParams({
+        type: latestContent.type,
+        tone: latestContent.tone,
+        style: latestContent.style
+      })
+      router.push(`/generated-content/social?${params.toString()}`)
+    } else {
+      // Si no hay contenido generado real, usar valores por defecto
+      const params = new URLSearchParams({
+        type: 'texto',
+        tone: 'casual',
+        style: 'entretenimiento'
+      })
+      router.push(`/generated-content/social?${params.toString()}`)
+    }
+  }
+
   return (
-    <div className="min-h-screen w-full bg-gray-50">
-      <NavbarUser />
-      <div className="max-w-6xl mx-auto mt-10">
+    <DashboardLayout>
+      <div className="max-w-6xl mx-auto p-6">
         <h1 className="text-2xl font-bold text-gray-900 mb-6">Mis proyectos</h1>
 
         {/* Search and Filter Bar */}
@@ -120,10 +138,20 @@ export default function ProjectsPage() {
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <Button variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-50 bg-transparent">
-                      Ver Análisis
+                    <Button 
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                      onClick={() => handleViewAnalysis(project)}
+                    >
+                      Visualizar contenido
                     </Button>
-                    <Button className="bg-blue-600 hover:bg-blue-700 text-white">Visualizar contenido</Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="border-red-300 text-red-600 hover:bg-red-50 bg-transparent"
+                      onClick={() => handleDeleteProject(project.id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -138,6 +166,6 @@ export default function ProjectsPage() {
           </div>
         )}
       </div>
-    </div>
+    </DashboardLayout>
   )
-}
+} 

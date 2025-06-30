@@ -25,6 +25,8 @@ import {
 } from 'lucide-react';
 import { TrainingSection } from './TrainingSection';
 import { VideoScriptSection } from './VideoScriptSection';
+import { useProjectsStore } from '@/store/projects';
+import { useGeneratedContentStore } from '@/store/generated-content';
 
 // Componente de loader animado
 const AILoader = () => (
@@ -46,6 +48,8 @@ const AILoader = () => (
 
 export function ContentGeneratorAdvanced() {
   const router = useRouter();
+  const { projects, linkContentToProject } = useProjectsStore();
+  const { generateContent } = useGeneratedContentStore();
   const [selectedContentType, setSelectedContentType] = useState('texto');
   const [selectedTone, setSelectedTone] = useState('amigable');
   const [selectedStyle, setSelectedStyle] = useState('educativos');
@@ -84,8 +88,19 @@ export function ContentGeneratorAdvanced() {
   const handleGenerate = async () => {
     setIsGenerating(true);
     
-    // Simular proceso de generación con delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Generar contenido en el store
+    await generateContent(selectedContentType as any, selectedTone, selectedStyle);
+    
+    // Vincular el contenido generado con el proyecto más reciente (si existe)
+    if (projects.length > 0) {
+      const latestProject = projects[0];
+      const contentParams = {
+        type: selectedContentType,
+        tone: selectedTone,
+        style: selectedStyle
+      };
+      linkContentToProject(latestProject.id, contentParams);
+    }
     
     // Navegar a la página de contenido generado con parámetros
     const params = new URLSearchParams({

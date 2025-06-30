@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { Bell, User, LogOut, Search, FileText, FolderOpen, CheckCircle, AlertCircle, Info, Menu } from "lucide-react"
+import { Bell, User, LogOut, History, FolderOpen, CheckCircle, AlertCircle, Info, Menu, FileText } from "lucide-react"
 import { useAuthStore } from '@/store/auth'
 import { Button } from "@/components/ui/button"
 import {
@@ -92,21 +92,9 @@ export default function NavbarUser({ sidebarOpen, toggleSidebar, isMobile }: Nav
     <nav className="border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:bg-gray-900/95 dark:supports-[backdrop-filter]:bg-gray-900/60 sticky top-0 z-30">
       <div className="mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          {/* Left side - Logo y Toggle Sidebar */}
+          {/* Left side - Logo */}
           <div className="flex items-center space-x-4">
-            {/* Sidebar Toggle solo para móvil */}
-            {toggleSidebar && isMobile && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={toggleSidebar}
-                className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100"
-              >
-                <Menu className="h-5 w-5" />
-              </Button>
-            )}
-            
-            <Link href="/dashboard" className="flex items-center space-x-2 flex-shrink-0">
+            <Link href="/selecciones" className="flex items-center space-x-2 flex-shrink-0">
               <Image src="/logo_scrito.svg" alt="Logo" width={120} height={120} />
             </Link>
           </div>
@@ -119,21 +107,21 @@ export default function NavbarUser({ sidebarOpen, toggleSidebar, isMobile }: Nav
                 className="text-gray-600 hover:text-gray-900 px-3 py-2 flex items-center space-x-2 text-sm font-medium transition-colors duration-200 hover:bg-gray-50 rounded-md"
               >
                 <FileText className="h-4 w-4" />
-                <span>Seleccion</span>
+                <span>Selección</span>
               </Link>
               <Link
-                href="/analytics"
+                href="/historial"
                 className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100 px-4 py-2 text-sm font-medium transition-colors duration-200 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-md flex items-center space-x-2"
               >
-                <Search className="h-4 w-4" />
-                <span>Análisis</span>
+                <History className="h-4 w-4" />
+                <span>Historial</span>
               </Link>
               <Link
-                href="/dashboard"
+                href="/proyectos"
                 className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100 px-4 py-2 text-sm font-medium transition-colors duration-200 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-md flex items-center space-x-2"
               >
                 <FolderOpen className="h-4 w-4" />
-                <span>Dashboard</span>
+                <span>Mis Proyectos</span>
               </Link>
             </div>
           </div>
@@ -212,7 +200,7 @@ export default function NavbarUser({ sidebarOpen, toggleSidebar, isMobile }: Nav
                 <DropdownMenuLabel>Mi cuenta</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/dashboard/profile">
+                <Link href="/dashboard/profile">
                       <User className="mr-2 h-4 w-4" />
                       <span>Mi Perfil</span>
                   </Link>

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +21,8 @@ import {
   Copy,
   CheckCircle
 } from 'lucide-react';
+import { useVideoScriptsStore } from '@/store/video-scripts';
+import { useProjectsStore } from '@/store/projects';
 
 // Componente de loader animado
 const AILoader = () => (
@@ -40,6 +43,9 @@ const AILoader = () => (
 );
 
 export function VideoScriptSection() {
+  const router = useRouter();
+  const { addScript } = useVideoScriptsStore();
+  const { projects, linkContentToProject } = useProjectsStore();
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedScript, setGeneratedScript] = useState('');
   const [showResult, setShowResult] = useState(false);
@@ -88,9 +94,32 @@ export function VideoScriptSection() {
     // Generar contenido mockeado basado en las selecciones
     const mockScript = generateMockScript(selectedTone, selectedStyle, selectedFocus, podcastAnalysis);
     
-    setGeneratedScript(mockScript);
-    setShowResult(true);
+    // Crear el guión en el store
+    const newScript = {
+      title: `Guión ${selectedStyle} - ${selectedTone}`,
+      content: mockScript,
+      tone: selectedTone,
+      style: selectedStyle,
+      focus: selectedFocus,
+      duration: '3-5 min',
+      status: 'completed' as const
+    };
+    
+    addScript(newScript);
+    
+    // Obtener el ID del guión recién creado (será el timestamp)
+    const scriptId = Date.now().toString();
+    
+    // Vincular el guión con el proyecto más reciente (si existe)
+    if (projects.length > 0) {
+      const latestProject = projects[0];
+      linkContentToProject(latestProject.id, undefined, scriptId);
+    }
+    
     setIsGenerating(false);
+    
+    // Redirigir a la página específica del guión
+    router.push(`/generated-content/scripts/${scriptId}`);
   };
 
   const generateMockScript = (tone: string, style: string, focus: string, analysis: string) => {

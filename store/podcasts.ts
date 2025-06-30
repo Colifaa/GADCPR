@@ -104,10 +104,11 @@ const sampleAudioUrls = {
 };
 
 const mockPodcastDatabase: PodcastData[] = [
+  // MARKETING PODCASTS
   {
     id: '1',
     title: 'Estrategias para el crecimiento de comunidades',
-    category: 'marketing',
+    category: 'otro',
     author: 'María López',
     rating: 5.0,
     totalReviews: 6,
@@ -118,7 +119,7 @@ const mockPodcastDatabase: PodcastData[] = [
         title: 'Introducción a las estrategias de crecimiento', 
         duration: '45:30', 
         description: 'Introducción a las estrategias de crecimiento para comunidades digitales',
-        audioUrl: sampleAudioUrls.local1, // Audio de ejemplo funcional
+        audioUrl: sampleAudioUrls.local1,
         publishDate: '2024-01-15'
       },
       { 
@@ -158,13 +159,15 @@ const mockPodcastDatabase: PodcastData[] = [
   {
     id: '2',
     title: 'Marketing Digital Avanzado',
-    category: 'marketing',
+    category: 'otro',
+    author: 'Roberto Silva',
     rating: 4.2,
     totalReviews: 8,
+    coverImage: 'https://via.placeholder.com/300x300/4ECDC4/FFFFFF?text=Digital+Mkt',
     episodes: [
-      { id: '1', title: 'Episodio 1', duration: '32:15', description: 'Fundamentos del marketing digital' },
-      { id: '2', title: 'Episodio 2', duration: '28:45', description: 'SEO y posicionamiento web' },
-      { id: '3', title: 'Episodio 3', duration: '35:20', description: 'Publicidad en redes sociales' },
+      { id: '1', title: 'Fundamentos del marketing digital', duration: '32:15', description: 'Fundamentos del marketing digital', audioUrl: sampleAudioUrls.local1, publishDate: '2024-02-01' },
+      { id: '2', title: 'SEO y posicionamiento web', duration: '28:45', description: 'SEO y posicionamiento web', audioUrl: sampleAudioUrls.local2, publishDate: '2024-02-08' },
+      { id: '3', title: 'Publicidad en redes sociales', duration: '35:20', description: 'Publicidad en redes sociales', audioUrl: sampleAudioUrls.local1, publishDate: '2024-02-15' },
     ],
     reviews: [
       {
@@ -190,6 +193,355 @@ const mockPodcastDatabase: PodcastData[] = [
       },
     ]
   },
+  {
+    id: '3',
+    title: 'Branding y Posicionamiento',
+    category: 'otro',
+    author: 'Ana Martínez',
+    rating: 4.7,
+    totalReviews: 12,
+    coverImage: 'https://via.placeholder.com/300x300/FF9F43/FFFFFF?text=Branding',
+    episodes: [
+      { id: '1', title: 'Construyendo una marca sólida', duration: '41:30', description: 'Cómo construir una marca sólida desde cero', audioUrl: sampleAudioUrls.local1, publishDate: '2024-02-20' },
+      { id: '2', title: 'Identidad visual y narrativa', duration: '36:45', description: 'Creando identidad visual y narrativa de marca', audioUrl: sampleAudioUrls.local2, publishDate: '2024-02-27' },
+      { id: '3', title: 'Posicionamiento en el mercado', duration: '44:15', description: 'Estrategias de posicionamiento efectivas', audioUrl: sampleAudioUrls.local1, publishDate: '2024-03-05' },
+    ],
+    reviews: [
+      { id: '1', userName: 'Diego Herrera', rating: 5, comment: 'Excelente contenido sobre branding. Muy profesional.', date: '20/08/00' },
+      { id: '2', userName: 'Carmen Vega', rating: 4, comment: 'Buenas ideas, aunque algunos conceptos son complejos.', date: '18/08/00' },
+    ]
+  },
+  {
+    id: '4',
+    title: 'Influencer Marketing Mastery',
+    category: 'otro',
+    author: 'Luis Fernández',
+    rating: 4.1,
+    totalReviews: 15,
+    coverImage: 'https://via.placeholder.com/300x300/A55EEA/FFFFFF?text=Influencer',
+    episodes: [
+      { id: '1', title: 'El poder del marketing de influencers', duration: '39:20', description: 'Introducción al marketing de influencers', audioUrl: sampleAudioUrls.local1, publishDate: '2024-03-10' },
+      { id: '2', title: 'Selección y colaboración con influencers', duration: '42:10', description: 'Cómo elegir y trabajar con influencers', audioUrl: sampleAudioUrls.local2, publishDate: '2024-03-17' },
+      { id: '3', title: 'Medición de ROI en campañas', duration: '37:55', description: 'Cómo medir el retorno de inversión', audioUrl: sampleAudioUrls.local1, publishDate: '2024-03-24' },
+    ],
+    reviews: [
+      { id: '1', userName: 'Isabella Cruz', rating: 4, comment: 'Muy útil para entender el mundo de los influencers.', date: '25/08/00' },
+      { id: '2', userName: 'Fernando Ruiz', rating: 4, comment: 'Buen contenido, pero podría tener más ejemplos prácticos.', date: '23/08/00' },
+    ]
+  },
+
+  // TECNOLOGÍA PODCASTS
+  {
+    id: '5',
+    title: 'Inteligencia Artificial y el Futuro',
+    category: 'tecnologia',
+    author: 'Dr. Carlos Tech',
+    rating: 4.8,
+    totalReviews: 20,
+    coverImage: 'https://via.placeholder.com/300x300/26D0CE/FFFFFF?text=AI+Future',
+    episodes: [
+      { id: '1', title: 'Introducción a la IA moderna', duration: '48:30', description: 'Fundamentos de la inteligencia artificial', audioUrl: sampleAudioUrls.local1, publishDate: '2024-01-10' },
+      { id: '2', title: 'Machine Learning en la práctica', duration: '52:15', description: 'Aplicaciones prácticas del machine learning', audioUrl: sampleAudioUrls.local2, publishDate: '2024-01-17' },
+      { id: '3', title: 'Ética en la inteligencia artificial', duration: '45:40', description: 'Consideraciones éticas en el desarrollo de IA', audioUrl: sampleAudioUrls.local1, publishDate: '2024-01-24' },
+      { id: '4', title: 'El futuro del trabajo con IA', duration: '41:25', description: 'Cómo la IA transformará el mercado laboral', audioUrl: sampleAudioUrls.local2, publishDate: '2024-01-31' },
+    ],
+    reviews: [
+      { id: '1', userName: 'Tech Enthusiast', rating: 5, comment: 'Increíble análisis del futuro de la IA. Muy recomendado.', date: '30/08/00' },
+      { id: '2', userName: 'María Developer', rating: 5, comment: 'Excelente para entender las tendencias tecnológicas.', date: '28/08/00' },
+      { id: '3', userName: 'Jorge Innovador', rating: 4, comment: 'Muy informativo, aunque a veces muy técnico.', date: '26/08/00' },
+    ]
+  },
+  {
+    id: '6',
+    title: 'Desarrollo Web Moderno',
+    category: 'tecnologia',
+    author: 'Sara DevCode',
+    rating: 4.5,
+    totalReviews: 18,
+    coverImage: 'https://via.placeholder.com/300x300/FF6348/FFFFFF?text=Web+Dev',
+    episodes: [
+      { id: '1', title: 'React vs Vue vs Angular', duration: '43:20', description: 'Comparación de frameworks frontend', audioUrl: sampleAudioUrls.local1, publishDate: '2024-02-05' },
+      { id: '2', title: 'Backend con Node.js', duration: '39:45', description: 'Desarrollo backend moderno con Node.js', audioUrl: sampleAudioUrls.local2, publishDate: '2024-02-12' },
+      { id: '3', title: 'Bases de datos NoSQL', duration: '46:10', description: 'MongoDB, Redis y otras bases NoSQL', audioUrl: sampleAudioUrls.local1, publishDate: '2024-02-19' },
+    ],
+    reviews: [
+      { id: '1', userName: 'DevMaster', rating: 5, comment: 'Perfecto para developers que quieren actualizarse.', date: '22/08/00' },
+      { id: '2', userName: 'CodeNinja', rating: 4, comment: 'Buen contenido técnico, muy útil.', date: '20/08/00' },
+    ]
+  },
+  {
+    id: '7',
+    title: 'Ciberseguridad Esencial',
+    category: 'tecnologia',
+    author: 'Alex SecurityPro',
+    rating: 4.6,
+    totalReviews: 14,
+    coverImage: 'https://via.placeholder.com/300x300/2C2C54/FFFFFF?text=Security',
+    episodes: [
+      { id: '1', title: 'Fundamentos de ciberseguridad', duration: '40:30', description: 'Conceptos básicos de seguridad informática', audioUrl: sampleAudioUrls.local1, publishDate: '2024-03-01' },
+      { id: '2', title: 'Protección contra malware', duration: '38:20', description: 'Cómo protegerse del malware moderno', audioUrl: sampleAudioUrls.local2, publishDate: '2024-03-08' },
+      { id: '3', title: 'Seguridad en la nube', duration: '44:45', description: 'Mejores prácticas para cloud security', audioUrl: sampleAudioUrls.local1, publishDate: '2024-03-15' },
+    ],
+    reviews: [
+      { id: '1', userName: 'SecureUser', rating: 5, comment: 'Esencial para cualquier profesional de IT.', date: '16/08/00' },
+      { id: '2', userName: 'ITManager', rating: 4, comment: 'Muy útil para implementar en la empresa.', date: '14/08/00' },
+    ]
+  },
+  {
+    id: '8',
+    title: 'Blockchain y Criptomonedas',
+    category: 'tecnologia',
+    author: 'Crypto Expert',
+    rating: 4.3,
+    totalReviews: 22,
+    coverImage: 'https://via.placeholder.com/300x300/F79F1F/FFFFFF?text=Blockchain',
+    episodes: [
+      { id: '1', title: 'Introducción al blockchain', duration: '47:15', description: 'Qué es blockchain y cómo funciona', audioUrl: sampleAudioUrls.local1, publishDate: '2024-03-20' },
+      { id: '2', title: 'Bitcoin y Ethereum explicados', duration: '41:30', description: 'Las criptomonedas más importantes', audioUrl: sampleAudioUrls.local2, publishDate: '2024-03-27' },
+      { id: '3', title: 'Smart contracts y DeFi', duration: '49:20', description: 'Contratos inteligentes y finanzas descentralizadas', audioUrl: sampleAudioUrls.local1, publishDate: '2024-04-03' },
+    ],
+    reviews: [
+      { id: '1', userName: 'CryptoTrader', rating: 4, comment: 'Buena introducción al mundo crypto.', date: '10/08/00' },
+      { id: '2', userName: 'BlockchainDev', rating: 5, comment: 'Excelente explicación técnica.', date: '08/08/00' },
+    ]
+  },
+
+  // EMPRENDIMIENTO PODCASTS
+  {
+    id: '9',
+    title: 'Startup desde Cero',
+    category: 'emprendimiento',
+    author: 'Elena Entrepreneur',
+    rating: 4.9,
+    totalReviews: 35,
+    coverImage: 'https://via.placeholder.com/300x300/00D2D3/FFFFFF?text=Startup',
+    episodes: [
+      { id: '1', title: 'Validando tu idea de negocio', duration: '44:20', description: 'Cómo validar una idea antes de invertir', audioUrl: sampleAudioUrls.local1, publishDate: '2024-01-05' },
+      { id: '2', title: 'Creando un MVP efectivo', duration: '41:15', description: 'Desarrollo de producto mínimo viable', audioUrl: sampleAudioUrls.local2, publishDate: '2024-01-12' },
+      { id: '3', title: 'Búsqueda de inversión', duration: '48:30', description: 'Cómo conseguir financiación para tu startup', audioUrl: sampleAudioUrls.local1, publishDate: '2024-01-19' },
+      { id: '4', title: 'Escalando tu negocio', duration: '42:45', description: 'Estrategias para hacer crecer tu empresa', audioUrl: sampleAudioUrls.local2, publishDate: '2024-01-26' },
+    ],
+    reviews: [
+      { id: '1', userName: 'StartupFounder', rating: 5, comment: 'Invaluable para cualquier emprendedor. Lo mejor que he escuchado.', date: '05/08/00' },
+      { id: '2', userName: 'BusinessOwner', rating: 5, comment: 'Consejos prácticos y realistas. Muy recomendado.', date: '03/08/00' },
+      { id: '3', userName: 'InvestorMind', rating: 4, comment: 'Buena perspectiva desde el lado del emprendedor.', date: '01/08/00' },
+    ]
+  },
+  {
+    id: '10',
+    title: 'Liderazgo y Gestión',
+    category: 'emprendimiento',
+    author: 'Miguel Leader',
+    rating: 4.4,
+    totalReviews: 16,
+    coverImage: 'https://via.placeholder.com/300x300/5F27CD/FFFFFF?text=Leadership',
+    episodes: [
+      { id: '1', title: 'Fundamentos del liderazgo', duration: '39:30', description: 'Qué hace a un buen líder', audioUrl: sampleAudioUrls.local1, publishDate: '2024-02-10' },
+      { id: '2', title: 'Gestión de equipos remotos', duration: '43:20', description: 'Liderando equipos distribuidos', audioUrl: sampleAudioUrls.local2, publishDate: '2024-02-17' },
+      { id: '3', title: 'Toma de decisiones estratégicas', duration: '46:15', description: 'Cómo tomar decisiones difíciles', audioUrl: sampleAudioUrls.local1, publishDate: '2024-02-24' },
+    ],
+    reviews: [
+      { id: '1', userName: 'TeamManager', rating: 4, comment: 'Muy útil para managers nuevos.', date: '28/07/00' },
+      { id: '2', userName: 'CEO_Startup', rating: 5, comment: 'Excelentes insights sobre liderazgo.', date: '26/07/00' },
+    ]
+  },
+  {
+    id: '11',
+    title: 'Finanzas para Emprendedores',
+    category: 'emprendimiento',
+    author: 'Laura FinanceGuru',
+    rating: 4.7,
+    totalReviews: 28,
+    coverImage: 'https://via.placeholder.com/300x300/FF3838/FFFFFF?text=Finance',
+    episodes: [
+      { id: '1', title: 'Fundamentos financieros', duration: '38:45', description: 'Conceptos básicos de finanzas empresariales', audioUrl: sampleAudioUrls.local1, publishDate: '2024-03-05' },
+      { id: '2', title: 'Flujo de caja y presupuestos', duration: '41:30', description: 'Gestión del flujo de caja', audioUrl: sampleAudioUrls.local2, publishDate: '2024-03-12' },
+      { id: '3', title: 'Inversión y crecimiento', duration: '44:20', description: 'Cómo invertir para crecer', audioUrl: sampleAudioUrls.local1, publishDate: '2024-03-19' },
+    ],
+    reviews: [
+      { id: '1', userName: 'SmallBizOwner', rating: 5, comment: 'Perfecto para entender las finanzas del negocio.', date: '20/07/00' },
+      { id: '2', userName: 'EntrepreneurLife', rating: 4, comment: 'Muy claro y fácil de entender.', date: '18/07/00' },
+    ]
+  },
+  {
+    id: '12',
+    title: 'Innovación y Creatividad',
+    category: 'emprendimiento',
+    author: 'David Innovator',
+    rating: 4.2,
+    totalReviews: 11,
+    coverImage: 'https://via.placeholder.com/300x300/FF9FF3/FFFFFF?text=Innovation',
+    episodes: [
+      { id: '1', title: 'Pensamiento creativo en los negocios', duration: '40:15', description: 'Cómo desarrollar creatividad empresarial', audioUrl: sampleAudioUrls.local1, publishDate: '2024-04-01' },
+      { id: '2', title: 'Innovación disruptiva', duration: '37:50', description: 'Creando productos que cambian mercados', audioUrl: sampleAudioUrls.local2, publishDate: '2024-04-08' },
+      { id: '3', title: 'Cultura de innovación', duration: '42:30', description: 'Fomentando la innovación en tu empresa', audioUrl: sampleAudioUrls.local1, publishDate: '2024-04-15' },
+    ],
+    reviews: [
+      { id: '1', userName: 'CreativeFounder', rating: 4, comment: 'Buenas ideas para estimular la creatividad.', date: '15/07/00' },
+      { id: '2', userName: 'InnovationManager', rating: 4, comment: 'Útil para crear equipos más innovadores.', date: '13/07/00' },
+    ]
+  },
+
+  // NUEVAS CATEGORÍAS
+  {
+    id: '13',
+    title: 'Productividad Personal',
+    category: 'otro',
+    author: 'Ana ProductivePro',
+    rating: 4.6,
+    totalReviews: 19,
+    coverImage: 'https://via.placeholder.com/300x300/54A0FF/FFFFFF?text=Productivity',
+    episodes: [
+      { id: '1', title: 'Gestión del tiempo efectiva', duration: '35:20', description: 'Técnicas para optimizar tu tiempo', audioUrl: sampleAudioUrls.local1, publishDate: '2024-04-20' },
+      { id: '2', title: 'Eliminando distracciones', duration: '32:45', description: 'Cómo mantener el foco en lo importante', audioUrl: sampleAudioUrls.local2, publishDate: '2024-04-27' },
+      { id: '3', title: 'Hábitos de alta performance', duration: '38:15', description: 'Construyendo rutinas exitosas', audioUrl: sampleAudioUrls.local1, publishDate: '2024-05-04' },
+    ],
+    reviews: [
+      { id: '1', userName: 'ProductiveUser', rating: 5, comment: 'Cambió completamente mi forma de trabajar.', date: '10/07/00' },
+      { id: '2', userName: 'TimeManager', rating: 4, comment: 'Técnicas muy prácticas y aplicables.', date: '08/07/00' },
+    ]
+  },
+  {
+    id: '14',
+    title: 'Salud Mental y Bienestar',
+    category: 'otro',
+    author: 'Dr. Mental Health',
+    rating: 4.8,
+    totalReviews: 24,
+    coverImage: 'https://via.placeholder.com/300x300/2ED573/FFFFFF?text=Wellness',
+    episodes: [
+      { id: '1', title: 'Manejo del estrés laboral', duration: '41:30', description: 'Técnicas para reducir el estrés en el trabajo', audioUrl: sampleAudioUrls.local1, publishDate: '2024-05-10' },
+      { id: '2', title: 'Mindfulness y meditación', duration: '36:20', description: 'Prácticas de atención plena', audioUrl: sampleAudioUrls.local2, publishDate: '2024-05-17' },
+      { id: '3', title: 'Balance vida-trabajo', duration: '39:45', description: 'Encontrando el equilibrio perfecto', audioUrl: sampleAudioUrls.local1, publishDate: '2024-05-24' },
+    ],
+    reviews: [
+      { id: '1', userName: 'WellnessSeeker', rating: 5, comment: 'Esencial para mantener la salud mental.', date: '05/07/00' },
+      { id: '2', userName: 'StressedWorker', rating: 5, comment: 'Me ayudó mucho con mi ansiedad laboral.', date: '03/07/00' },
+    ]
+  },
+  {
+    id: '15',
+    title: 'Inversiones y Finanzas Personales',
+    category: 'otro',
+    author: 'Carlos InvestorPro',
+    rating: 4.5,
+    totalReviews: 31,
+    coverImage: 'https://via.placeholder.com/300x300/FFA502/FFFFFF?text=Investing',
+    episodes: [
+      { id: '1', title: 'Introducción a las inversiones', duration: '43:15', description: 'Primeros pasos en el mundo de las inversiones', audioUrl: sampleAudioUrls.local1, publishDate: '2024-05-30' },
+      { id: '2', title: 'Diversificación de portafolio', duration: '40:30', description: 'Cómo diversificar tus inversiones', audioUrl: sampleAudioUrls.local2, publishDate: '2024-06-06' },
+      { id: '3', title: 'Inversión a largo plazo', duration: '45:20', description: 'Estrategias para inversores pacientes', audioUrl: sampleAudioUrls.local1, publishDate: '2024-06-13' },
+    ],
+    reviews: [
+      { id: '1', userName: 'NewInvestor', rating: 4, comment: 'Perfecto para principiantes en inversiones.', date: '01/07/00' },
+      { id: '2', userName: 'PortfolioBuilder', rating: 5, comment: 'Excelentes consejos sobre diversificación.', date: '29/06/00' },
+    ]
+  },
+  // ENTRETENIMIENTO PODCASTS
+  {
+    id: '16',
+    title: 'Historias de Terror',
+    category: 'entretenimiento',
+    author: 'Narradora Misteriosa',
+    rating: 4.7,
+    totalReviews: 18,
+    coverImage: 'https://via.placeholder.com/300x300/8B5CF6/FFFFFF?text=Terror',
+    episodes: [
+      { id: '1', title: 'La casa abandonada', duration: '35:20', description: 'Una historia escalofriante sobre una casa maldita', audioUrl: sampleAudioUrls.local1, publishDate: '2024-06-20' },
+      { id: '2', title: 'El espejo del ático', duration: '28:45', description: 'Un espejo que muestra más de lo que debería', audioUrl: sampleAudioUrls.local2, publishDate: '2024-06-27' },
+    ],
+    reviews: [
+      { id: '1', userName: 'HorrorFan', rating: 5, comment: '¡Me encanta! Muy bien narrado.', date: '25/06/00' },
+      { id: '2', userName: 'ScaredListener', rating: 4, comment: 'Perfecto para noches de insomnio.', date: '22/06/00' },
+    ]
+  },
+  {
+    id: '17',
+    title: 'Comedia y Risas',
+    category: 'entretenimiento',
+    author: 'Los Comediantes',
+    rating: 4.3,
+    totalReviews: 22,
+    coverImage: 'https://via.placeholder.com/300x300/F59E0B/FFFFFF?text=Comedy',
+    episodes: [
+      { id: '1', title: 'Anécdotas divertidas', duration: '42:10', description: 'Las mejores anécdotas cómicas', audioUrl: sampleAudioUrls.local1, publishDate: '2024-07-01' },
+      { id: '2', title: 'Imitaciones famosas', duration: '38:30', description: 'Imitando a celebridades', audioUrl: sampleAudioUrls.local2, publishDate: '2024-07-08' },
+    ],
+    reviews: [
+      { id: '1', userName: 'LaughLover', rating: 4, comment: 'Me hicieron reír mucho en el trabajo.', date: '10/07/00' },
+      { id: '2', userName: 'FunnyGuy', rating: 5, comment: 'Excelente para levantar el ánimo.', date: '05/07/00' },
+    ]
+  },
+  // NOTICIAS PODCASTS
+  {
+    id: '18',
+    title: 'Noticias del Mundo Tech',
+    category: 'noticias',
+    author: 'Periodista Digital',
+    rating: 4.4,
+    totalReviews: 35,
+    coverImage: 'https://via.placeholder.com/300x300/EF4444/FFFFFF?text=News',
+    episodes: [
+      { id: '1', title: 'Últimas noticias de IA', duration: '25:15', description: 'Lo más reciente en inteligencia artificial', audioUrl: sampleAudioUrls.local1, publishDate: '2024-07-15' },
+      { id: '2', title: 'Actualizaciones de redes sociales', duration: '30:20', description: 'Cambios en plataformas sociales', audioUrl: sampleAudioUrls.local2, publishDate: '2024-07-16' },
+    ],
+    reviews: [
+      { id: '1', userName: 'NewsJunkie', rating: 4, comment: 'Siempre al día con las noticias tech.', date: '16/07/00' },
+      { id: '2', userName: 'TechFollower', rating: 5, comment: 'Información precisa y actualizada.', date: '15/07/00' },
+    ]
+  },
+  {
+    id: '19',
+    title: 'Política Internacional',
+    category: 'noticias',
+    author: 'Analista Político',
+    rating: 4.1,
+    totalReviews: 28,
+    coverImage: 'https://via.placeholder.com/300x300/6B7280/FFFFFF?text=Politics',
+    episodes: [
+      { id: '1', title: 'Análisis electoral 2024', duration: '45:30', description: 'Análisis de las elecciones mundiales', audioUrl: sampleAudioUrls.local1, publishDate: '2024-07-10' },
+      { id: '2', title: 'Relaciones internacionales', duration: '40:15', description: 'Estado de las relaciones entre países', audioUrl: sampleAudioUrls.local2, publishDate: '2024-07-17' },
+    ],
+    reviews: [
+      { id: '1', userName: 'PoliticalWatcher', rating: 4, comment: 'Análisis muy profundo y objetivo.', date: '18/07/00' },
+      { id: '2', userName: 'NewsReader', rating: 4, comment: 'Me ayuda a entender la política mundial.', date: '12/07/00' },
+    ]
+  },
+  // EDUCACIÓN PODCASTS
+  {
+    id: '20',
+    title: 'Historia Universal',
+    category: 'educacion',
+    author: 'Prof. Historia',
+    rating: 4.8,
+    totalReviews: 42,
+    coverImage: 'https://via.placeholder.com/300x300/10B981/FFFFFF?text=History',
+    episodes: [
+      { id: '1', title: 'Civilizaciones antiguas', duration: '50:20', description: 'Explorando las grandes civilizaciones', audioUrl: sampleAudioUrls.local1, publishDate: '2024-06-01' },
+      { id: '2', title: 'Guerras mundiales', duration: '55:45', description: 'Análisis de los grandes conflictos', audioUrl: sampleAudioUrls.local2, publishDate: '2024-06-08' },
+    ],
+    reviews: [
+      { id: '1', userName: 'HistoryBuff', rating: 5, comment: 'Increíblemente educativo y entretenido.', date: '15/06/00' },
+      { id: '2', userName: 'Student', rating: 5, comment: 'Me ayuda mucho con mis estudios.', date: '10/06/00' },
+    ]
+  },
+  {
+    id: '21',
+    title: 'Ciencias Naturales',
+    category: 'educacion',
+    author: 'Dr. Científico',
+    rating: 4.6,
+    totalReviews: 33,
+    coverImage: 'https://via.placeholder.com/300x300/3B82F6/FFFFFF?text=Science',
+    episodes: [
+      { id: '1', title: 'Física cuántica explicada', duration: '48:10', description: 'Conceptos de física cuántica simplificados', audioUrl: sampleAudioUrls.local1, publishDate: '2024-06-15' },
+      { id: '2', title: 'Biología molecular', duration: '42:30', description: 'Fundamentos de biología molecular', audioUrl: sampleAudioUrls.local2, publishDate: '2024-06-22' },
+    ],
+    reviews: [
+      { id: '1', userName: 'ScienceLover', rating: 5, comment: 'Complejo pero muy bien explicado.', date: '25/06/00' },
+      { id: '2', userName: 'CuriousStudent', rating: 4, comment: 'Perfecto para aprender ciencias.', date: '20/06/00' },
+    ]
+  }
 ];
 
 export const usePodcastStore = create<PodcastState>((set, get) => ({
@@ -202,7 +554,7 @@ export const usePodcastStore = create<PodcastState>((set, get) => ({
   urlError: '',
   currentPodcastPage: 1,
   currentReviewPage: 1,
-  podcastsPerPage: 15,
+  podcastsPerPage: 8,
   reviewsPerPage: 6,
   
   // Audio Player State

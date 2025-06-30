@@ -13,18 +13,24 @@ import {
   Settings,
   LogOut,
   Shield,
-  User
+  User,
+  X
 } from 'lucide-react';
 
 const navigation = [
-  { name: 'Panel Principal', href: '/admin', icon: Shield },
-  { name: 'Métricas', href: '/admin/metricas', icon: BarChart3 },
-  { name: 'Pagos', href: '/admin/pagos', icon: CreditCard },
-  { name: 'Gestión', href: '/admin/gestion', icon: Settings },
+  { name: 'Métricas', href: '/admin', icon: BarChart3 },
+  { name: 'Pagos', href: '/admin/payments', icon: CreditCard },
+  { name: 'Gestión', href: '/admin/management', icon: Settings },
   { name: 'Mi Perfil', href: '/admin/profile', icon: User },
 ];
 
-export function SidebarAdmin() {
+interface SidebarAdminProps {
+  sidebarOpen?: boolean;
+  toggleSidebar?: () => void;
+  isMobile?: boolean;
+}
+
+export function SidebarAdmin({ sidebarOpen, toggleSidebar, isMobile }: SidebarAdminProps) {
   const pathname = usePathname();
   const { user, logout } = useAuthStore();
 
@@ -33,7 +39,28 @@ export function SidebarAdmin() {
   };
 
   return (
-    <div className="flex h-full w-64 flex-col bg-white border-r border-gray-200">
+    <div className={`
+      flex h-full flex-col bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700
+      ${isMobile ? 'w-64' : 'w-64'}
+      transition-all duration-300 ease-in-out
+    `}>
+      {/* Header con botón de cerrar en móvil */}
+      {isMobile && (
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+          <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">Admin Panel</span>
+          {toggleSidebar && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleSidebar}
+              className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100"
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          )}
+        </div>
+      )}
+
       {/* User Profile Section */}
       <div className="flex h-20 items-center px-6 border-b border-gray-200">
         {user ? (
@@ -79,9 +106,15 @@ export function SidebarAdmin() {
               className={cn(
                 'flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors',
                 isActive
-                  ? 'bg-cyan-50 text-cyan-700'
-                  : 'text-gray-700 hover:bg-gray-100'
+                  ? 'bg-cyan-50 text-cyan-700 dark:bg-cyan-900/20 dark:text-cyan-400'
+                  : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
               )}
+              onClick={() => {
+                // Cerrar sidebar en móvil al hacer clic en un enlace
+                if (isMobile && toggleSidebar) {
+                  toggleSidebar();
+                }
+              }}
             >
               <item.icon className="mr-3 h-5 w-5" />
               {item.name}

@@ -116,10 +116,10 @@ export function LoginForm() {
           {/* Forgot Password Link */}
           <div className="text-left">
             <Link
-              href="/forgot-password"
-              className="text-sm text-gray-600 hover:text-blue-600 transition-colors duration-200"
+              href="/auth/forgot-password"
+              className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200"
             >
-              Olvidé contraseña
+              ¿Olvidaste tu contraseña?
             </Link>
           </div>
 

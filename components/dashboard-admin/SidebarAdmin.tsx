@@ -11,7 +11,6 @@ import {
   BarChart3,
   CreditCard,
   Settings,
-  LogOut,
   Shield,
   User,
   X
@@ -32,11 +31,7 @@ interface SidebarAdminProps {
 
 export function SidebarAdmin({ sidebarOpen, toggleSidebar, isMobile }: SidebarAdminProps) {
   const pathname = usePathname();
-  const { user, logout } = useAuthStore();
-
-  const handleLogout = () => {
-    logout();
-  };
+  const { user } = useAuthStore();
 
   return (
     <div className={`
@@ -123,18 +118,7 @@ export function SidebarAdmin({ sidebarOpen, toggleSidebar, isMobile }: SidebarAd
         })}
       </nav>
 
-      {/* Logout section */}
-      <div className="p-4 border-t border-gray-200">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleLogout}
-          className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
-        >
-          <LogOut className="h-4 w-4 mr-2" />
-          Cerrar Sesión
-        </Button>
-      </div>
+
     </div>
   );
 }

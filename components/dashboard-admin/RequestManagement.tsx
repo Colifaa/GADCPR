@@ -1,7 +1,9 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useAdminStore, SupportRequest } from '@/store/admin';
+import { useNotificationStore } from '@/store/notifications';
+import { useSupportStore } from '@/store/support';
 import { Card, CardContent } from '@/components/ui/card'; 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,6 +35,8 @@ const ITEMS_PER_PAGE = 10;
 
 export function RequestManagement() {
   const { supportRequests, respondToRequest } = useAdminStore();
+  const { notifySupportResponse } = useNotificationStore();
+  const { contactRequests, respondToContactRequest } = useSupportStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<SupportRequest['type'] | 'all'>('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -41,15 +45,36 @@ export function RequestManagement() {
   const [response, setResponse] = useState('');
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
 
+  // Combinar solicitudes del admin con las del formulario de contacto
+  const allRequests = useMemo(() => {
+    const contactRequestsFormatted = contactRequests.map(req => ({
+      id: req.id,
+      userId: 'contact-user',
+      userName: req.name,
+      userEmail: req.email,
+      userPhone: req.phone,
+      type: req.type,
+      title: req.subject,
+      description: req.message,
+      status: req.status,
+      createdAt: req.createdAt,
+      respondedAt: req.respondedAt,
+      adminResponse: req.adminResponse,
+      adminId: req.adminId,
+    }));
+    
+    return [...supportRequests, ...contactRequestsFormatted];
+  }, [supportRequests, contactRequests]);
+
   // Filtrar solicitudes por estado
   const pendingRequests = useMemo(() => 
-    supportRequests.filter(req => req.status === 'pending'),
-    [supportRequests]
+    allRequests.filter(req => req.status === 'pending'),
+    [allRequests]
   );
 
   const respondedRequests = useMemo(() => 
-    supportRequests.filter(req => req.status === 'responded'),
-    [supportRequests]
+    allRequests.filter(req => req.status === 'responded'),
+    [allRequests]
   );
 
   // Filtrar y paginar solicitudes pendientes
@@ -134,7 +159,17 @@ export function RequestManagement() {
 
   const handleSendResponse = () => {
     if (selectedRequest && response.trim()) {
-      respondToRequest(selectedRequest.id, response.trim(), 'admin-1');
+      // Si es una consulta del formulario de contacto, actualizar el store de support
+      if (selectedRequest.id.startsWith('contact-')) {
+        respondToContactRequest(selectedRequest.id, response.trim(), 'admin-1');
+      } else {
+        // Es una consulta del admin store
+        respondToRequest(selectedRequest.id, response.trim(), 'admin-1');
+      }
+      
+      // Enviar notificación de respuesta de soporte
+      notifySupportResponse(selectedRequest.id);
+      
       setShowRequestModal(false);
       setResponse('');
       setSelectedRequest(null);

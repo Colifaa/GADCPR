@@ -30,6 +30,7 @@ import { VideoScriptSection } from './VideoScriptSection';
 import { useProjectsStore } from '@/store/projects';
 import { useGeneratedContentStore } from '@/store/generated-content';
 import { useUserImagesStore } from '@/store/user-images';
+import { useNotificationStore } from '@/store/notifications';
 
 // Componente de loader animado
 const AILoader = () => (
@@ -65,6 +66,7 @@ export function ContentGeneratorAdvanced() {
   const { projects, linkContentToProject } = useProjectsStore();
   const { generateContent } = useGeneratedContentStore();
   const { images: userImages, addImage, removeImage, addSuggestedImages, getSuggestedImages, getUserImages, getStorageInfo, clearUserImages, resetToDefaultImages } = useUserImagesStore();
+  const { notifyContentGenerated } = useNotificationStore();
   const [selectedContentType, setSelectedContentType] = useState('texto');
   const [selectedTone, setSelectedTone] = useState('amigable');
   const [selectedStyle, setSelectedStyle] = useState('educativos');
@@ -375,6 +377,21 @@ export function ContentGeneratorAdvanced() {
     
     // Generar contenido en el store
     await generateContent(selectedContentType as any, selectedTone, selectedStyle);
+    
+    // Obtener el título del contenido generado para la notificación
+    const contentTypeNames: Record<string, string> = {
+      'texto': 'Publicación de texto',
+      'imagenes': 'Carousel de imágenes',
+      'videos': 'Video',
+      'gif': 'GIF animado',
+      'infografias': 'Infografía',
+      'presentaciones': 'Presentación'
+    };
+    
+    const contentTitle = contentTypeNames[selectedContentType] || selectedContentType;
+    
+    // Enviar notificación de contenido generado
+    notifyContentGenerated(selectedContentType, contentTitle);
     
     // Vincular el contenido generado con el proyecto más reciente (si existe)
     if (projects.length > 0) {

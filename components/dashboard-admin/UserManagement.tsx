@@ -22,7 +22,8 @@ import {
   Calendar,
   Clock,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  RefreshCw
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -33,6 +34,7 @@ export function UserManagement() {
     deleteUser,
     createUser,
     updateUser,
+    refreshUsers,
   } = useAdminStore();
 
   // Estados para la gestión de usuarios
@@ -91,6 +93,19 @@ export function UserManagement() {
   React.useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm]);
+
+  // Refrescar usuarios al montar el componente y cada 10 segundos
+  React.useEffect(() => {
+    // Refrescar inmediatamente
+    refreshUsers();
+    
+    // Refrescar cada 10 segundos para mostrar nuevos usuarios registrados
+    const interval = setInterval(() => {
+      refreshUsers();
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [refreshUsers]);
 
   // Resetear formulario
   const resetForm = () => {
@@ -248,16 +263,26 @@ export function UserManagement() {
 
   return (
     <div className="space-y-6">
-      {/* Header con título y botón de agregar */}
+      {/* Header con título y botones */}
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Usuarios</h2>
           <p className="text-gray-600 dark:text-gray-400">Gestiona todos los usuarios de la plataforma</p>
         </div>
-        <Button onClick={handleCreateUser} className="bg-blue-600 hover:bg-blue-700 text-white">
-          <UserPlus className="h-4 w-4 mr-2" />
-          Agregar nuevo usuario
-        </Button>
+        <div className="flex space-x-2">
+          <Button 
+            onClick={refreshUsers} 
+            variant="outline"
+            className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100"
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refrescar
+          </Button>
+          <Button onClick={handleCreateUser} className="bg-blue-600 hover:bg-blue-700 text-white">
+            <UserPlus className="h-4 w-4 mr-2" />
+            Agregar nuevo usuario
+          </Button>
+        </div>
       </div>
 
       {/* Barra de búsqueda */}

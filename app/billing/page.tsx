@@ -7,12 +7,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useDashboardStore } from '@/store/dashboard';
 import { useAuthStore } from '@/store/auth';
+import { useNotificationStore } from '@/store/notifications';
 import { CreditCard, Zap, Calendar, Check, Star } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function BillingPage() {
   const { transactions } = useDashboardStore();
   const { user } = useAuthStore();
+  const { notifyPaymentProcessed, notifySubscriptionExpiring } = useNotificationStore();
 
   const plans = [
     {
@@ -83,6 +85,18 @@ export default function BillingPage() {
       default:
         return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
     }
+  };
+
+  const handleUpgrade = (planName: string, price: number) => {
+    // Simular procesamiento de pago
+    setTimeout(() => {
+      notifyPaymentProcessed(price, planName);
+      
+      // Simular notificación de vencimiento en el futuro (para demo)
+      setTimeout(() => {
+        notifySubscriptionExpiring(7);
+      }, 5000);
+    }, 1000);
   };
 
   return (
@@ -163,6 +177,7 @@ export default function BillingPage() {
                     className="w-full" 
                     variant={plan.current ? 'secondary' : 'default'}
                     disabled={plan.current}
+                    onClick={() => !plan.current && handleUpgrade(plan.name, plan.price)}
                   >
                     {plan.current ? 'Current Plan' : 'Upgrade'}
                   </Button>

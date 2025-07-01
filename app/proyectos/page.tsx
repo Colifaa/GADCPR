@@ -25,11 +25,56 @@ export default function ProjectsPage() {
     migrateProjects()
   }, [])
 
-  const filteredProjects = projects.filter(
-    (project: Project) =>
-      project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      project.subtitle.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+  const filteredProjects = projects.filter((project: Project) => {
+    // Filtro por término de búsqueda
+    const matchesSearch = project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         project.subtitle.toLowerCase().includes(searchTerm.toLowerCase())
+    
+    // Filtro por fecha
+    let matchesDate = true
+    if (dateFilter) {
+      const projectDate = new Date(project.createdAt || project.date)
+      const now = new Date()
+      
+      switch (dateFilter) {
+        case "recent":
+          // Ordenar por más reciente (esto se manejará en el ordenamiento)
+          matchesDate = true
+          break
+        case "oldest":
+          // Ordenar por más antiguo (esto se manejará en el ordenamiento)
+          matchesDate = true
+          break
+        case "this-week":
+          const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+          matchesDate = projectDate >= weekAgo
+          break
+        case "this-month":
+          const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+          matchesDate = projectDate >= monthAgo
+          break
+        default:
+          matchesDate = true
+      }
+    }
+    
+    return matchesSearch && matchesDate
+  })
+
+  // Ordenar proyectos según el filtro de fecha
+  const sortedProjects = [...filteredProjects].sort((a, b) => {
+    const dateA = new Date(a.createdAt || a.date)
+    const dateB = new Date(b.createdAt || b.date)
+    
+    switch (dateFilter) {
+      case "recent":
+        return dateB.getTime() - dateA.getTime() // Más reciente primero
+      case "oldest":
+        return dateA.getTime() - dateB.getTime() // Más antiguo primero
+      default:
+        return dateB.getTime() - dateA.getTime() // Por defecto, más reciente primero
+    }
+  })
 
   const handleDeleteProject = (projectId: string) => {
     if (window.confirm('¿Estás seguro de que quieres eliminar este proyecto? Esta acción no se puede deshacer.')) {
@@ -113,7 +158,15 @@ export default function ProjectsPage() {
                 className="pl-10 bg-white border-gray-300"
               />
             </div>
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6">Buscar</Button>
+            <Button 
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6"
+              onClick={() => {
+                setSearchTerm("")
+                setDateFilter("")
+              }}
+            >
+              Limpiar
+            </Button>
           </div>
 
           <Select value={dateFilter} onValueChange={setDateFilter}>
@@ -131,7 +184,7 @@ export default function ProjectsPage() {
 
         {/* Projects List */}
         <div className="space-y-4">
-          {filteredProjects.map((project) => (
+          {sortedProjects.map((project) => (
             <div key={project.id} className="bg-blue-50 border border-blue-100 rounded-lg p-6 flex items-center gap-6">
               {/* Project Icon */}
               <div className="w-16 h-16 bg-slate-800 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -185,7 +238,7 @@ export default function ProjectsPage() {
         </div>
 
         {/* Empty State */}
-        {filteredProjects.length === 0 && (
+        {sortedProjects.length === 0 && (
           <div className="text-center py-12">
             <p className="text-gray-500">No se encontraron proyectos que coincidan con tu búsqueda.</p>
           </div>

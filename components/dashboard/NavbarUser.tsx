@@ -2,8 +2,9 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { Bell, User, LogOut, History, FolderOpen, CheckCircle, AlertCircle, Info, Menu, FileText } from "lucide-react"
+import { Bell, User, LogOut, History, FolderOpen, CheckCircle, AlertCircle, Info, Menu, FileText, ExternalLink, X } from "lucide-react"
 import { useAuthStore } from '@/store/auth'
+import { useNotificationStore, useNotificationWebSocket } from '@/store/notifications'
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -16,42 +17,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Image from "next/image"
-
-// Mock notifications data
-const notifications = [
-  {
-    id: 1,
-    type: "success",
-    title: "Proyecto completado",
-    message: "Tu proyecto 'Landing Page' ha sido finalizado exitosamente",
-    time: "Hace 5 min",
-    read: false,
-  },
-  {
-    id: 2,
-    type: "info",
-    title: "Nueva actualización",
-    message: "Hay nuevas funcionalidades disponibles en tu dashboard",
-    time: "Hace 1 hora",
-    read: false,
-  },
-  {
-    id: 3,
-    type: "warning",
-    title: "Recordatorio",
-    message: "Tu suscripción vence en 3 días",
-    time: "Hace 2 horas",
-    read: true,
-  },
-  {
-    id: 4,
-    type: "info",
-    title: "Comentario nuevo",
-    message: "Alguien comentó en tu proyecto 'E-commerce App'",
-    time: "Ayer",
-    read: true,
-  },
-]
+import { useRouter } from "next/navigation"
 
 const getNotificationIcon = (type: string) => {
   switch (type) {
@@ -59,6 +25,8 @@ const getNotificationIcon = (type: string) => {
       return <CheckCircle className="h-4 w-4 text-green-500" />
     case "warning":
       return <AlertCircle className="h-4 w-4 text-yellow-500" />
+    case "error":
+      return <AlertCircle className="h-4 w-4 text-red-500" />
     case "info":
     default:
       return <Info className="h-4 w-4 text-blue-500" />
@@ -72,15 +40,21 @@ interface NavbarUserProps {
 }
 
 export default function NavbarUser({ sidebarOpen, toggleSidebar, isMobile }: NavbarUserProps) {
-  const [unreadCount, setUnreadCount] = React.useState(notifications.filter((n) => !n.read).length)
   const { user, logout } = useAuthStore()
+  const { notifications, unreadCount, markAsRead, markAllAsRead, removeNotification, removeDuplicates, resetNotifications } = useNotificationStore()
+  const router = useRouter()
+  
+  // Inicializar el websocket simulado
+  useNotificationWebSocket()
 
-  const handleMarkAsRead = (id: number) => {
-    // In a real app, this would update the backend
-    const notification = notifications.find((n) => n.id === id)
-    if (notification && !notification.read) {
-      notification.read = true
-      setUnreadCount((prev) => prev - 1)
+  const handleMarkAsRead = (id: string) => {
+    markAsRead(id)
+  }
+
+  const handleNotificationClick = (notification: any) => {
+    handleMarkAsRead(notification.id)
+    if (notification.actionUrl) {
+      router.push(notification.actionUrl)
     }
   }
 
@@ -157,8 +131,8 @@ export default function NavbarUser({ sidebarOpen, toggleSidebar, isMobile }: Nav
                   {notifications.map((notification) => (
                     <DropdownMenuItem
                       key={notification.id}
-                      className="flex items-start space-x-3 p-3 cursor-pointer"
-                      onClick={() => handleMarkAsRead(notification.id)}
+                      className="flex items-start space-x-3 p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800"
+                      onClick={() => handleNotificationClick(notification)}
                     >
                       <div className="flex-shrink-0 mt-0.5">{getNotificationIcon(notification.type)}</div>
                       <div className="flex-1 min-w-0">
@@ -168,18 +142,75 @@ export default function NavbarUser({ sidebarOpen, toggleSidebar, isMobile }: Nav
                           >
                             {notification.title}
                           </p>
-                          {!notification.read && (
-                            <div className="h-2 w-2 bg-blue-500 rounded-full flex-shrink-0 ml-2"></div>
-                          )}
+                          <div className="flex items-center space-x-1">
+                            {!notification.read && (
+                              <div className="h-2 w-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+                            )}
+                            {notification.actionUrl && (
+                              <ExternalLink className="h-3 w-3 text-gray-400" />
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-4 w-4 p-0 hover:bg-red-100 hover:text-red-600"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                removeNotification(notification.id)
+                              }}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
                         </div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{notification.message}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{notification.message}</p>
                         <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{notification.time}</p>
                       </div>
                     </DropdownMenuItem>
                   ))}
                 </div>
                 {notifications.length === 0 && (
-                  <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">No hay notificaciones</div>
+                  <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
+                    <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p>No hay notificaciones</p>
+                    <p className="text-xs mt-1">Las notificaciones aparecerán aquí cuando realices acciones</p>
+                  </div>
+                )}
+                
+                {notifications.length > 0 && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <div className="p-2 flex justify-between">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={markAllAsRead}
+                        className="text-xs"
+                        disabled={unreadCount === 0}
+                      >
+                        Marcar leídas
+                      </Button>
+                      <div className="flex space-x-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            notifications.forEach(n => removeNotification(n.id))
+                          }}
+                          className="text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          Limpiar
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={resetNotifications}
+                          className="text-xs text-red-700 hover:text-red-800 hover:bg-red-100"
+                        >
+                          Reset
+                        </Button>
+                      </div>
+                    </div>
+                  </>
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
@@ -213,16 +244,7 @@ export default function NavbarUser({ sidebarOpen, toggleSidebar, isMobile }: Nav
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Separate Logout Button - Oculto en móvil */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleLogout}
-              className="hidden sm:flex text-gray-600 hover:text-red-600 dark:text-gray-300 dark:hover:text-red-400 px-3 py-2 text-sm font-medium transition-colors duration-200 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md"
-            >
-              <span className="hidden lg:inline mr-1">Salir</span>
-              <LogOut className="h-4 w-4" />
-            </Button>
+
           </div>
         </div>
       </div>

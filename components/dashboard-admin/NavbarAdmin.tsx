@@ -15,42 +15,8 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { useAuthStore } from "@/store/auth"
-
-// Mock notifications data (puedes reemplazarlo por datos reales)
-const notifications = [
-  {
-    id: 1,
-    type: "success",
-    title: "Sistema actualizado",
-    message: "El sistema ha sido actualizado exitosamente a la versión 2.1",
-    time: "Hace 5 min",
-    read: false,
-  },
-  {
-    id: 2,
-    type: "info",
-    title: "Nuevo usuario registrado",
-    message: "Se ha registrado un nuevo usuario en la plataforma",
-    time: "Hace 15 min",
-    read: false,
-  },
-  {
-    id: 3,
-    type: "warning",
-    title: "Mantenimiento programado",
-    message: "Habrá mantenimiento del servidor mañana a las 2:00 AM",
-    time: "Hace 1 hora",
-    read: true,
-  },
-  {
-    id: 4,
-    type: "info",
-    title: "Informe mensual listo",
-    message: "El informe mensual de métricas está disponible",
-    time: "Hace 2 horas",
-    read: true,
-  },
-]
+import { useNotificationStore, useNotificationWebSocket } from '@/store/notifications'
+import { useRouter } from "next/navigation"
 
 const getNotificationIcon = (type: string) => {
   switch (type) {
@@ -71,14 +37,21 @@ interface NavbarAdminProps {
 }
 
 export default function NavbarAdmin({ sidebarOpen, toggleSidebar, isMobile }: NavbarAdminProps) {
-  const [unreadCount, setUnreadCount] = React.useState(notifications.filter((n) => !n.read).length)
   const { user, logout } = useAuthStore()
+  const { notifications, unreadCount, markAsRead, markAllAsRead, removeNotification, removeDuplicates, resetNotifications } = useNotificationStore()
+  const router = useRouter()
+  
+  // Inicializar el websocket simulado
+  useNotificationWebSocket()
 
-  const handleMarkAsRead = (id: number) => {
-    const notification = notifications.find((n) => n.id === id)
-    if (notification && !notification.read) {
-      notification.read = true
-      setUnreadCount((prev) => prev - 1)
+  const handleMarkAsRead = (id: string) => {
+    markAsRead(id)
+  }
+
+  const handleNotificationClick = (notification: any) => {
+    handleMarkAsRead(notification.id)
+    if (notification.actionUrl) {
+      router.push(notification.actionUrl)
     }
   }
 
@@ -167,8 +140,8 @@ export default function NavbarAdmin({ sidebarOpen, toggleSidebar, isMobile }: Na
                   {notifications.map((notification) => (
                     <DropdownMenuItem
                       key={notification.id}
-                      className="flex items-start space-x-3 p-3 cursor-pointer"
-                      onClick={() => handleMarkAsRead(notification.id)}
+                      className="flex items-start space-x-3 p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800"
+                      onClick={() => handleNotificationClick(notification)}
                     >
                       <div className="flex-shrink-0 mt-0.5">{getNotificationIcon(notification.type)}</div>
                       <div className="flex-1 min-w-0">
@@ -182,14 +155,55 @@ export default function NavbarAdmin({ sidebarOpen, toggleSidebar, isMobile }: Na
                             <div className="h-2 w-2 bg-blue-500 rounded-full flex-shrink-0 ml-2"></div>
                           )}
                         </div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{notification.message}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{notification.message}</p>
                         <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{notification.time}</p>
                       </div>
                     </DropdownMenuItem>
                   ))}
                 </div>
                 {notifications.length === 0 && (
-                  <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">No hay notificaciones</div>
+                  <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
+                    <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p>No hay notificaciones</p>
+                    <p className="text-xs mt-1">Las notificaciones aparecerán aquí cuando se realicen acciones del sistema</p>
+                  </div>
+                )}
+                
+                {notifications.length > 0 && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <div className="p-2 flex justify-between">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={markAllAsRead}
+                        className="text-xs"
+                        disabled={unreadCount === 0}
+                      >
+                        Marcar leídas
+                      </Button>
+                      <div className="flex space-x-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            notifications.forEach(n => removeNotification(n.id))
+                          }}
+                          className="text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          Limpiar
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={resetNotifications}
+                          className="text-xs text-red-700 hover:text-red-800 hover:bg-red-100"
+                        >
+                          Reset
+                        </Button>
+                      </div>
+                    </div>
+                  </>
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
@@ -223,16 +237,7 @@ export default function NavbarAdmin({ sidebarOpen, toggleSidebar, isMobile }: Na
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Separate Logout Button - Oculto en móvil */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleLogout}
-              className="hidden sm:flex text-gray-600 hover:text-red-600 dark:text-gray-300 dark:hover:text-red-400 px-3 py-2 text-sm font-medium transition-colors duration-200 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md"
-            >
-              <span className="hidden lg:inline mr-1">Salir</span>
-              <LogOut className="h-4 w-4" />
-            </Button>
+
           </div>
         </div>
       </div>

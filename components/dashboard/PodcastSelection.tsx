@@ -11,6 +11,7 @@ import { usePodcastStore, type Episode, type Review, type PodcastData } from '@/
 import { usePodcastAnalysisStore } from '@/store/podcastanalysis';
 import { useHistoryStore } from '@/store/history';
 import { useProjectsStore } from '@/store/projects';
+import { useNotificationStore } from '@/store/notifications';
 
 export function PodcastSelection() {
   const router = useRouter();
@@ -67,6 +68,9 @@ export function PodcastSelection() {
 
   // Store de proyectos
   const { addProject } = useProjectsStore();
+  
+  // Store de notificaciones
+  const { notifyAnalysisCompleted, notifyProjectCreated } = useNotificationStore();
 
   // Obtener categorías únicas
   const categories = Array.from(new Set(podcastDatabase.map(p => p.category)));
@@ -147,6 +151,9 @@ export function PodcastSelection() {
 
       addEntry(historyEntry);
 
+      // Enviar notificación de análisis completado
+      notifyAnalysisCompleted(selectedPodcast.title);
+
       // Generar contenido mock basado en el podcast y guardarlo en proyectos
       const generateMockContent = () => {
         const contentTypes = ['text', 'image', 'video', 'gif', 'infografia', 'presentacion'] as const;
@@ -217,6 +224,9 @@ export function PodcastSelection() {
       };
 
       addProject(projectData);
+
+      // Enviar notificación de proyecto creado
+      notifyProjectCreated(selectedPodcast.title);
 
       setTimeout(() => {
         router.push('/selecciones/podcast');
@@ -454,7 +464,7 @@ export function PodcastSelection() {
                     <Filter className="w-4 h-4" />
                     <span>Filtrar por Categoría</span>
                     {categoryFilter !== 'all' && (
-                      <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                      <span className="ml-2 px-2 py-1 bg-[#79ccdd]/20 text-[#79ccdd] text-xs rounded-full border border-[#79ccdd]/30">
                         {categoryFilter === 'tecnologia' ? 'Tecnología' : 
                          categoryFilter === 'entretenimiento' ? 'Entretenimiento' : 
                          categoryFilter === 'educacion' ? 'Educación' : 
@@ -476,7 +486,7 @@ export function PodcastSelection() {
                         setCategoryFilter('all');
                         setShowCategoryFilter(false);
                       }}
-                      className="h-10"
+                      className={`h-10 ${categoryFilter === 'all' ? 'bg-[#79ccdd] hover:bg-[#6bb8ca] text-white border-[#79ccdd]' : ''}`}
                     >
                       Todos
                     </Button>
@@ -486,7 +496,7 @@ export function PodcastSelection() {
                         setCategoryFilter('tecnologia');
                         setShowCategoryFilter(false);
                       }}
-                      className="h-10"
+                      className={`h-10 ${categoryFilter === 'tecnologia' ? 'bg-[#79ccdd] hover:bg-[#6bb8ca] text-white border-[#79ccdd]' : ''}`}
                     >
                       Tecnología
                     </Button>
@@ -496,7 +506,7 @@ export function PodcastSelection() {
                         setCategoryFilter('entretenimiento');
                         setShowCategoryFilter(false);
                       }}
-                      className="h-10"
+                      className={`h-10 ${categoryFilter === 'entretenimiento' ? 'bg-[#79ccdd] hover:bg-[#6bb8ca] text-white border-[#79ccdd]' : ''}`}
                     >
                       Entretenimiento
                     </Button>
@@ -506,7 +516,7 @@ export function PodcastSelection() {
                         setCategoryFilter('educacion');
                         setShowCategoryFilter(false);
                       }}
-                      className="h-10"
+                      className={`h-10 ${categoryFilter === 'educacion' ? 'bg-[#79ccdd] hover:bg-[#6bb8ca] text-white border-[#79ccdd]' : ''}`}
                     >
                       Educación
                     </Button>
@@ -516,7 +526,7 @@ export function PodcastSelection() {
                         setCategoryFilter('noticias');
                         setShowCategoryFilter(false);
                       }}
-                      className="h-10"
+                      className={`h-10 ${categoryFilter === 'noticias' ? 'bg-[#79ccdd] hover:bg-[#6bb8ca] text-white border-[#79ccdd]' : ''}`}
                     >
                       Noticias
                     </Button>
@@ -526,7 +536,7 @@ export function PodcastSelection() {
                         setCategoryFilter('otro');
                         setShowCategoryFilter(false);
                       }}
-                      className="h-10"
+                      className={`h-10 ${categoryFilter === 'otro' ? 'bg-[#79ccdd] hover:bg-[#6bb8ca] text-white border-[#79ccdd]' : ''}`}
                     >
                       Otro
                     </Button>
@@ -539,7 +549,7 @@ export function PodcastSelection() {
                 <p className="text-gray-600">
                   Mostrando {currentPodcasts.length} de {filteredPodcasts.length} podcasts
                   {categoryFilter !== 'all' && (
-                    <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                    <span className="ml-2 px-2 py-1 bg-[#79ccdd]/20 text-[#79ccdd] text-xs rounded-full border border-[#79ccdd]/30">
                       {categoryFilter}
                     </span>
                   )}

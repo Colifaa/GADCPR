@@ -121,9 +121,35 @@ interface AdminState {
   cancelSubscription: (subscriptionId: string) => void;
   respondToRequest: (requestId: string, response: string, adminId: string) => void;
   fetchAdminData: () => Promise<void>;
+  refreshUsers: () => void;
 }
 
-// Mock data
+// Función para obtener usuarios reales de localStorage
+const getRealUsers = (): AdminUser[] => {
+  try {
+    const users = JSON.parse(localStorage.getItem('users-db') || '[]');
+    return users.map((user: any) => ({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone || '',
+      identificationNumber: user.document || '',
+      identificationType: 'DNI' as const,
+      address: user.address || '',
+      registrationDate: user.createdAt ? new Date(user.createdAt) : new Date(),
+      lastLogin: user.lastLogin ? new Date(user.lastLogin) : undefined,
+      status: user.status || 'active',
+      plan: user.plan === 'admin' ? 'enterprise' : user.plan,
+      credits: user.credits || 0,
+      createdAt: user.createdAt ? new Date(user.createdAt) : new Date(),
+    }));
+  } catch (error) {
+    console.error('Error loading real users:', error);
+    return [];
+  }
+};
+
+// Mock data para cuando no hay usuarios reales
 const mockUsers: AdminUser[] = [
   {
     id: '1',
@@ -304,6 +330,20 @@ const mockUsers: AdminUser[] = [
     lastLogin: new Date('2024-01-25')
   }
 ];
+
+// Función para inicializar usuarios combinando reales y mock
+const initializeUsers = (): AdminUser[] => {
+  const realUsers = getRealUsers();
+  
+  // Si hay usuarios reales, usarlos. Si no, usar mock data
+  if (realUsers.length > 0) {
+    console.log('✅ Cargando usuarios reales:', realUsers.length);
+    return realUsers;
+  } else {
+    console.log('📋 Usando datos mock de usuarios');
+    return mockUsers;
+  }
+};
 
 // Mock subscriptions data - based on real users
 const mockSubscriptions: Subscription[] = [
@@ -615,7 +655,7 @@ const mockTransactions: AdminTransaction[] = [
 ];
 
 export const useAdminStore = create<AdminState>((set, get) => ({
-  users: mockUsers,
+  users: initializeUsers(),
   subscriptions: mockSubscriptions,
   supportRequests: mockSupportRequests,
   content: mockContent,
@@ -681,6 +721,30 @@ export const useAdminStore = create<AdminState>((set, get) => ({
 
     const users = get().users;
     set({ users: [...users, newUser] });
+    
+    // También agregar a la base de datos de autenticación
+    try {
+      const authUsers = JSON.parse(localStorage.getItem('users-db') || '[]');
+      const newAuthUser = {
+        id: newUser.id,
+        name: newUser.name,
+        email: newUser.email,
+        phone: newUser.phone,
+        document: newUser.identificationNumber,
+        address: newUser.address,
+        password: userData.password || 'password123',
+        plan: newUser.plan,
+        credits: newUser.credits,
+        status: newUser.status,
+        role: 'user',
+        createdAt: newUser.createdAt.toISOString()
+      };
+      authUsers.push(newAuthUser);
+      localStorage.setItem('users-db', JSON.stringify(authUsers));
+      console.log('✅ Usuario agregado a la base de datos de autenticación');
+    } catch (error) {
+      console.error('❌ Error al agregar usuario a la base de datos de autenticación:', error);
+    }
     
     return newUser;
   },
@@ -759,6 +823,14 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
     // Data is already loaded from mock data
+  },
+
+  refreshUsers: () => {
+    const refreshedUsers = getRealUsers();
+    if (refreshedUsers.length > 0) {
+      set({ users: refreshedUsers });
+      console.log('✅ Usuarios refrescados desde localStorage');
+    }
   }
 }));
 

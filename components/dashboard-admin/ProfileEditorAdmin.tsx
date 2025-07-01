@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,17 +32,48 @@ export function ProfileEditorAdmin() {
     lastName: user?.name?.split(' ').slice(1).join(' ') || '',
     nickname: user?.nickname || 'Usuario',
     email: user?.email || '',
-    phone: user?.phone || '0000000000',
-    document: user?.document || '123456',
-    country: user?.country || 'Servicio',
+    phone: user?.phone || '',
+    document: user?.document || '',
+    country: user?.country || '',
     avatar: user?.avatar || '',
   });
 
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('**********');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [profileImagePreview, setProfileImagePreview] = useState<string>(user?.avatar || '');
+  const [userPassword, setUserPassword] = useState<string>('');
+
+  // Función para obtener la contraseña del usuario desde localStorage
+  const getUserPassword = () => {
+    try {
+      const users = JSON.parse(localStorage.getItem('users-db') || '[]');
+      const currentUser = users.find((u: any) => u.id === user?.id);
+      return currentUser?.password || '';
+    } catch (error) {
+      console.error('Error al obtener contraseña:', error);
+      return '';
+    }
+  };
+
+  // Efecto para actualizar los datos cuando el usuario cambie
+  useEffect(() => {
+    if (user) {
+      console.log('🔄 Sincronizando datos del usuario admin:', user);
+      const newProfileData = {
+        name: user.name?.split(' ')[0] || '',
+        lastName: user.name?.split(' ').slice(1).join(' ') || '',
+        nickname: user.nickname || 'Usuario',
+        email: user.email || '',
+        phone: user.phone || '',
+        document: user.document || '',
+        country: user.country || '',
+        avatar: user.avatar || '',
+      };
+      setProfileData(newProfileData);
+      setProfileImagePreview(user.avatar || '');
+      setUserPassword(getUserPassword());
+    }
+  }, [user]);
 
   const handleInputChange = (field: keyof ProfileData, value: string) => {
     setProfileData(prev => ({ ...prev, [field]: value }));
@@ -61,22 +92,66 @@ export function ProfileEditorAdmin() {
         return;
       }
 
-      // Validar tamaño (máximo 5MB)
-      if (file.size > 5 * 1024 * 1024) {
+      // Validar tamaño (máximo 500KB para evitar problemas de localStorage)
+      if (file.size > 500 * 1024) {
         toast({
           title: "Error",
-          description: "La imagen debe ser menor a 5MB.",
+          description: "La imagen debe ser menor a 500KB para evitar problemas de almacenamiento.",
           variant: "destructive",
         });
         return;
       }
 
+      // Procesar la imagen
       const reader = new FileReader();
       reader.onload = (e) => {
         const result = e.target?.result as string;
-        setProfileImagePreview(result);
-        handleInputChange('avatar', result);
+        console.log('📸 Nueva imagen cargada para admin');
+        
+        // Crear un elemento canvas para comprimir la imagen
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          
+          // Redimensionar a máximo 200x200
+          const maxSize = 200;
+          let { width, height } = img;
+          
+          if (width > height) {
+            if (width > maxSize) {
+              height = (height * maxSize) / width;
+              width = maxSize;
+            }
+          } else {
+            if (height > maxSize) {
+              width = (width * maxSize) / height;
+              height = maxSize;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          
+          // Dibujar la imagen redimensionada
+          ctx?.drawImage(img, 0, 0, width, height);
+          
+          // Convertir a base64 con calidad reducida
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+          
+          console.log('📸 Imagen comprimida para admin:', {
+            originalSize: (result.length / 1024).toFixed(2) + 'KB',
+            compressedSize: (compressedDataUrl.length / 1024).toFixed(2) + 'KB'
+          });
+          
+          // Actualizar la vista previa y los datos
+          setProfileImagePreview(compressedDataUrl);
+          handleInputChange('avatar', compressedDataUrl);
+        };
+        
+        img.src = result;
       };
+      
       reader.readAsDataURL(file);
     }
   };
@@ -87,6 +162,16 @@ export function ProfileEditorAdmin() {
     setIsLoading(true);
     
     try {
+      console.log('🔄 Actualizando perfil admin con datos:', {
+        name: `${profileData.name} ${profileData.lastName}`.trim(),
+        nickname: profileData.nickname,
+        email: profileData.email,
+        phone: profileData.phone,
+        document: profileData.document,
+        country: profileData.country,
+        avatar: profileData.avatar ? 'Imagen presente' : 'Sin imagen',
+      });
+
       // Actualizar perfil
       const profileUpdateSuccess = await updateProfile({
         name: `${profileData.name} ${profileData.lastName}`.trim(),
@@ -102,11 +187,38 @@ export function ProfileEditorAdmin() {
         throw new Error('Error al actualizar el perfil');
       }
 
+      console.log('✅ Perfil admin actualizado exitosamente');
+      
+      // Verificar que los datos se guardaron
+      const users = JSON.parse(localStorage.getItem('users-db') || '[]');
+      const updatedUser = users.find((u: any) => u.id === user?.id);
+      console.log('📊 Usuario actualizado en localStorage:', updatedUser);
+
+      // Actualizar la vista previa de la imagen con la nueva imagen guardada
+      if (updatedUser?.avatar) {
+        console.log('🖼️ Actualizando imagen de vista previa del admin');
+        setProfileImagePreview(updatedUser.avatar);
+      }
+
+      // Forzar actualización del estado del perfil para sincronizar
+      const newProfileData = {
+        name: updatedUser?.name?.split(' ')[0] || profileData.name,
+        lastName: updatedUser?.name?.split(' ').slice(1).join(' ') || profileData.lastName,
+        nickname: updatedUser?.nickname || profileData.nickname,
+        email: updatedUser?.email || profileData.email,
+        phone: updatedUser?.phone || profileData.phone,
+        document: updatedUser?.document || profileData.document,
+        country: updatedUser?.country || profileData.country,
+        avatar: updatedUser?.avatar || profileData.avatar,
+      };
+      setProfileData(newProfileData);
+
       sonnerToast.success("¡Perfil actualizado!", {
         description: "Tu información ha sido actualizada correctamente.",
       });
       
     } catch (error) {
+      console.error('❌ Error al actualizar perfil admin:', error);
       sonnerToast.error("Error al actualizar", {
         description: error instanceof Error ? error.message : "Hubo un problema al actualizar tu perfil.",
       });
@@ -287,9 +399,9 @@ export function ProfileEditorAdmin() {
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
+                    value={showPassword ? userPassword : "••••••••••"}
                     className="bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800 pr-10"
+                    readOnly
                   />
                   <Button
                     type="button"
@@ -305,12 +417,6 @@ export function ProfileEditorAdmin() {
                     )}
                   </Button>
                 </div>
-                <button
-                  type="button"
-                  className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-                >
-                  Cambiar contraseña
-                </button>
               </div>
             </div>
 

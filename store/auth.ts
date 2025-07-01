@@ -43,6 +43,62 @@ interface AuthState {
   initializeDefaultUsers: () => void;
 }
 
+// Función para limpiar localStorage cuando esté lleno
+const cleanupLocalStorage = () => {
+  try {
+    // Limpiar notificaciones antiguas
+    localStorage.removeItem('notifications-storage');
+    
+    // Limpiar datos temporales
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const key = localStorage.key(i);
+      if (key && (key.includes('temp-') || key.includes('cache-'))) {
+        localStorage.removeItem(key);
+      }
+    }
+    
+    console.log('🧹 LocalStorage limpiado por falta de espacio');
+  } catch (error) {
+    console.error('Error limpiando localStorage:', error);
+  }
+};
+
+// Función para guardar usuarios con manejo de errores
+const saveLocalUsers = (users: any[]) => {
+  try {
+    // Limpiar avatares base64 muy grandes para ahorrar espacio
+    const cleanUsers = users.map(user => ({
+      ...user,
+      avatar: user.avatar && user.avatar.startsWith('data:') && user.avatar.length > 50000 
+        ? `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&size=200&background=3b82f6&color=ffffff`
+        : user.avatar
+    }));
+    
+    localStorage.setItem('users-db', JSON.stringify(cleanUsers));
+    return true;
+  } catch (error) {
+    if (error instanceof Error && error.name === 'QuotaExceededError') {
+      console.warn('⚠️ LocalStorage lleno, limpiando...');
+      cleanupLocalStorage();
+      
+      // Intentar guardar de nuevo después de limpiar
+      try {
+        const cleanUsers = users.map(user => ({
+          ...user,
+          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&size=200&background=3b82f6&color=ffffff`
+        }));
+        localStorage.setItem('users-db', JSON.stringify(cleanUsers));
+        return true;
+      } catch (secondError) {
+        console.error('❌ Error al guardar después de limpiar:', secondError);
+        return false;
+      }
+    }
+    console.error('Error saving to local database:', error);
+    return false;
+  }
+};
+
 // Función para obtener usuarios de localStorage
 const getLocalUsers = () => {
   try {
@@ -51,17 +107,6 @@ const getLocalUsers = () => {
   } catch (error) {
     console.error('Error reading from local database:', error);
     return [];
-  }
-};
-
-// Función para guardar usuarios en localStorage
-const saveLocalUsers = (users: any[]) => {
-  try {
-    localStorage.setItem('users-db', JSON.stringify(users));
-    return true;
-  } catch (error) {
-    console.error('Error saving to local database:', error);
-    return false;
   }
 };
 
@@ -156,12 +201,15 @@ export const useAuthStore = create<AuthState>()(
             // Convertir el usuario a la interfaz User (sin password)
             const { password: _, ...userWithoutPassword } = user;
             set({ user: userWithoutPassword, isAuthenticated: true });
-            console.log('✅ Login exitoso');
+            console.log('✅ Login exitoso para:', email);
+            console.log('👤 Usuario logueado:', { ...userWithoutPassword, password: '***' });
             return true;
           } else {
-            console.log('❌ Contraseña incorrecta');
-            console.log('🔑 Contraseña esperada:', `"${user.password}"`);
+            console.log('❌ Contraseña incorrecta para:', email);
+            console.log('🔑 Contraseña en BD:', `"${user.password}"`);
             console.log('🔑 Contraseña ingresada:', `"${password}"`);
+            console.log('🔍 Longitud BD:', user.password?.length);
+            console.log('🔍 Longitud ingresada:', password?.length);
             return false;
           }
         } else {

@@ -174,10 +174,10 @@ export function ProfileEditor() {
         return;
       }
 
-      if (file.size > 5 * 1024 * 1024) {
+      if (file.size > 2 * 1024 * 1024) {
         toast({
           title: "Error",
-          description: "La imagen debe ser menor a 5MB.",
+          description: "La imagen debe ser menor a 2MB.",
           variant: "destructive",
         });
         return;
@@ -185,9 +185,9 @@ export function ProfileEditor() {
 
       const reader = new FileReader();
       reader.onload = (e) => {
-        const result = e.target?.result as string;
-        setProfileImagePreview(result);
-        handleInputChange('avatar', result);
+        const base64String = e.target?.result as string;
+        setProfileImagePreview(base64String);
+        handleInputChange('avatar', base64String);
       };
       reader.readAsDataURL(file);
     }
@@ -303,7 +303,7 @@ export function ProfileEditor() {
             <h2 className="text-xl font-semibold text-gray-900 mt-4">
               {profileData.name || 'Usuario'}
             </h2>
-            <p className="text-gray-600">Administrador</p>
+            <p className="text-gray-600">{user?.subscription || 'Usuario'}</p>
           </div>
 
           <div className="mt-8 space-y-4">

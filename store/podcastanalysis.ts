@@ -231,7 +231,42 @@ const getMockDataByCategory = (category: string, podcastData: any) => {
     }
   };
 
-  return categorySpecificData[category as keyof typeof categorySpecificData] || categorySpecificData.tecnologia;
+  if (categorySpecificData[category as keyof typeof categorySpecificData]) {
+    return categorySpecificData[category as keyof typeof categorySpecificData];
+  }
+
+  // Generar datos genéricos si la categoría no está definida
+  const genericKeywords = podcastData.title.split(' ').slice(0, 4).map((w: string) => w.replace(/[^a-zA-Zá-úÁ-Ú0-9]/g, ''));
+  const genericTopicName = podcastData.title.split(' ').slice(0, 2).join(' ');
+
+  const genericData = {
+    topics: [
+      { id: '1', name: genericTopicName, relevance: 90, frequency: 70, sentiment: 'positive' as const, keywords: genericKeywords },
+      { id: '2', name: 'Tendencias Relevantes', relevance: 80, frequency: 60, sentiment: 'neutral' as const, keywords: ['Tendencias', 'Actualidad', 'Insights'] },
+      { id: '3', name: 'Perspectivas de la Audiencia', relevance: 75, frequency: 55, sentiment: 'positive' as const, keywords: ['Audiencia', 'Feedback', 'Engagement'] },
+      { id: '4', name: 'Casos Destacados', relevance: 70, frequency: 50, sentiment: 'positive' as const, keywords: ['Casos', 'Ejemplos', 'Lecciones'] }
+    ],
+    insights: [
+      `El podcast muestra gran interés en ${genericTopicName}`,
+      'La audiencia valora la información aplicada a la vida real',
+      'Los episodios con invitados generan mayor retención',
+      'Las preguntas abiertas incrementan la participación en redes sociales'
+    ],
+    strengths: [
+      'Contenido bien estructurado y fácil de seguir',
+      'Presentadores con buen dominio del tema',
+      'Uso de ejemplos y anécdotas que enriquecen el aprendizaje',
+      'Actualización frecuente de episodios'
+    ],
+    improvements: [
+      'Incluir más estadísticas y datos concretos',
+      'Ampliar la diversidad de voces invitadas',
+      'Explorar formatos más dinámicos como debates o Q&A',
+      'Optimizar la duración para mantener la atención de la audiencia'
+    ]
+  };
+
+  return genericData;
 };
 
 export const usePodcastAnalysisStore = create<PodcastAnalysisState>((set, get) => ({
@@ -348,32 +383,49 @@ export const usePodcastAnalysisStore = create<PodcastAnalysisState>((set, get) =
         { ageGroup: '55+', percentage: 5, engagement: 73, preferredTopics: ['Sabiduría', 'Mentoría'] }
       ],
 
-      contentRecommendations: [
-        {
-          id: '1',
-          type: 'topic',
-          title: 'Incorporar más casos de estudio locales',
-          description: 'La audiencia muestra 40% más engagement con ejemplos de empresas locales',
-          priority: 'high',
-          expectedImpact: 85
-        },
-        {
-          id: '2',
-          type: 'format',
-          title: 'Episodios más cortos para móvil',
-          description: 'Crear versiones de 20-30 minutos para consumo móvil',
-          priority: 'medium',
-          expectedImpact: 70
-        },
-        {
-          id: '3',
-          type: 'timing',
-          title: 'Publicar los martes por la mañana',
-          description: 'Los datos muestran 25% más engagement en este horario',
-          priority: 'medium',
-          expectedImpact: 60
-        }
-      ],
+      contentRecommendations: (() => {
+        // Función auxiliar para barajar arrays
+        const shuffleArray = <T,>(arr: T[]): T[] => arr.slice().sort(() => Math.random() - 0.5);
+
+        // Plantillas base
+        const baseRecommendations = [
+          {
+            type: 'topic' as const,
+            title: `Profundizar en ${categoryData.topics[0]?.name || 'temas clave'}`,
+            description: 'La audiencia quiere un análisis más detallado sobre este tema',
+          },
+          {
+            type: 'format' as const,
+            title: 'Integrar episodios de preguntas y respuestas',
+            description: 'Fomenta la participación directa de la audiencia',
+          },
+          {
+            type: 'timing' as const,
+            title: 'Publicar en horarios de mayor actividad',
+            description: 'Optimiza la visibilidad del episodio en las primeras horas',
+          },
+          {
+            type: 'style' as const,
+            title: 'Añadir historias personales',
+            description: 'Humaniza el contenido y crea mayor conexión emocional',
+          },
+          {
+            type: 'topic' as const,
+            title: 'Invitar expertos externos',
+            description: 'Aporta perspectivas variadas y credibilidad adicional',
+          }
+        ];
+
+        // Seleccionar aleatoriamente 3 recomendaciones y asignar prioridad/impacto aleatorio
+        const selected = shuffleArray(baseRecommendations).slice(0, 3).map((rec, idx) => ({
+          id: (idx + 1).toString(),
+          ...rec,
+          priority: (['high', 'medium', 'low'])[Math.floor(Math.random() * 3)] as 'high' | 'medium' | 'low',
+          expectedImpact: Math.floor(Math.random() * 30) + 60 // 60 - 90
+        }));
+
+        return selected;
+      })(),
 
       competitorAnalysis: [
         {

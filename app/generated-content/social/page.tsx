@@ -476,18 +476,18 @@ const PresentacionContent = ({ data }: { data: any }) => {
                </span>
                {/* Paginado corregido */}
                {Array.from({ length: Math.min(5, data.slides.length) }, (_, i) => {
-                 let slideNum;
+                 let slideNumber: number;
                  if (data.slides.length <= 5) {
-                   slideNum = i + 1;
+                   slideNumber = i + 1;
                  } else if (currentSlide < 2) {
-                   slideNum = i + 1;
+                   slideNumber = i + 1;
                  } else if (currentSlide >= data.slides.length - 2) {
-                   slideNum = data.slides.length - 4 + i;
+                   slideNumber = data.slides.length - 4 + i;
                  } else {
-                   slideNum = currentSlide - 1 + i;
+                   slideNumber = currentSlide - 1 + i;
                  }
                  
-                 const isActive = slideNum === currentSlide + 1;
+                 const isActive = slideNumber === currentSlide + 1;
                  
                  return (
                    <span 
@@ -497,9 +497,9 @@ const PresentacionContent = ({ data }: { data: any }) => {
                          ? 'bg-blue-100 text-blue-700' 
                          : 'text-gray-400 hover:text-gray-600'
                      }`}
-                     onClick={() => setCurrentSlide(slideNum - 1)}
+                     onClick={() => setCurrentSlide(slideNumber - 1)}
                    >
-                     {slideNum}
+                     {slideNumber}
                    </span>
                  );
                })}

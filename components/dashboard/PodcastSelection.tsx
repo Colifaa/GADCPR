@@ -12,6 +12,7 @@ import { usePodcastAnalysisStore } from '@/store/podcastanalysis';
 import { useHistoryStore } from '@/store/history';
 import { useProjectsStore } from '@/store/projects';
 import { useNotificationStore } from '@/store/notifications';
+import { useGeneratedContentStore } from '@/store/generated-content';
 
 export function PodcastSelection() {
   const router = useRouter();
@@ -126,111 +127,107 @@ export function PodcastSelection() {
   // Efecto para navegar al análisis completo cuando termine
   useEffect(() => {
     if (currentAnalysis && !isAnalyzing && showAnalysisView && selectedPodcast) {
-      // Guardar en el historial cuando el análisis se complete
-      const historyEntry = {
-        title: `Análisis: ${selectedPodcast.title}`,
-        podcastTitle: selectedPodcast.title,
-        podcastAuthor: selectedPodcast.author || 'Autor desconocido',
-        episodeTitle: selectedEpisode?.title,
-        type: 'podcast' as const,
-        status: 'completed' as const,
-        analysisData: {
-          summary: `Análisis completo del podcast "${selectedPodcast.title}" realizado con éxito.`,
-          keyPoints: [
-            'Análisis de contenido',
-            'Extracción de insights',
-            'Generación de resumen'
-          ],
-          insights: [
-            'Contenido procesado exitosamente',
-            'Datos extraídos para análisis posterior'
-          ],
-          duration: selectedEpisode?.duration || '00:00'
-        }
-      };
-
-      addEntry(historyEntry);
-
-      // Enviar notificación de análisis completado
-      notifyAnalysisCompleted(selectedPodcast.title);
-
-      // Generar contenido mock basado en el podcast y guardarlo en proyectos
-      const generateMockContent = () => {
-        const contentTypes = ['text', 'image', 'video', 'gif', 'infografia', 'presentacion'] as const;
-        const randomType = contentTypes[Math.floor(Math.random() * contentTypes.length)];
-        
-        const contentTemplates = {
-          text: {
-            type: 'text' as const,
-            title: `Post para ${selectedPodcast.category === 'tecnologia' ? 'LinkedIn' : 'Instagram'}`,
-            content: `🎧 Acabo de analizar "${selectedPodcast.title}" y estos son los insights clave:\n\n✨ Puntos destacados:\n• Contenido de calidad sobre ${selectedPodcast.category}\n• Análisis profundo del tema\n• Aplicación práctica inmediata\n\n💡 Reflexión: Este podcast ofrece una perspectiva única sobre ${selectedPodcast.category}.\n\n#Podcast #${selectedPodcast.category} #Aprendizaje #Insights`,
-            description: `Contenido de texto optimizado para redes sociales`
-          },
-          image: {
-            type: 'image' as const,
-            title: `Infografía - ${selectedPodcast.title}`,
-            content: `/api/generated/image/${selectedPodcast.id}`,
-            thumbnail: `/api/generated/thumb/${selectedPodcast.id}`,
-            description: `Infografía con los puntos clave del podcast`
-          },
-          video: {
-            type: 'video' as const,
-            title: `Video Resumen - ${selectedPodcast.title}`,
-            content: `/api/generated/video/${selectedPodcast.id}`,
-            thumbnail: `/api/generated/video-thumb/${selectedPodcast.id}`,
-            description: `Resumen en video del análisis del podcast`
-          },
-          gif: {
-            type: 'gif' as const,
-            title: `GIF Animado - Conceptos Clave`,
-            content: `/api/generated/gif/${selectedPodcast.id}`,
-            thumbnail: `/api/generated/gif-thumb/${selectedPodcast.id}`,
-            description: `Animación con los conceptos principales del podcast`
-          },
-          infografia: {
-            type: 'infografia' as const,
-            title: `Infografía - ${selectedPodcast.title}`,
-            content: `/api/generated/infografia/${selectedPodcast.id}.pdf`,
-            thumbnail: `/api/generated/infografia-thumb/${selectedPodcast.id}`,
-            description: `Infografía detallada con insights del podcast`,
-            format: 'PDF'
-          },
-          presentacion: {
-            type: 'presentacion' as const,
-            title: `Presentación - ${selectedPodcast.title}`,
-            content: `/api/generated/presentacion/${selectedPodcast.id}.pptx`,
-            thumbnail: `/api/generated/presentacion-thumb/${selectedPodcast.id}`,
-            description: `Deck ejecutivo con puntos clave del análisis`,
-            slides: Math.floor(Math.random() * 10) + 8, // Entre 8 y 17 slides
-            format: 'PPTX'
+      (async () => {
+        // Guardar en el historial cuando el análisis se complete
+        const historyEntry = {
+          title: `Análisis: ${selectedPodcast.title}`,
+          podcastTitle: selectedPodcast.title,
+          podcastAuthor: selectedPodcast.author || 'Autor desconocido',
+          episodeTitle: selectedEpisode?.title,
+          type: 'podcast' as const,
+          status: 'completed' as const,
+          analysisData: {
+            summary: `Análisis completo del podcast "${selectedPodcast.title}" realizado con éxito.`,
+            keyPoints: [
+              'Análisis de contenido',
+              'Extracción de insights',
+              'Generación de resumen'
+            ],
+            insights: [
+              'Contenido procesado exitosamente',
+              'Datos extraídos para análisis posterior'
+            ],
+            duration: selectedEpisode?.duration || '00:00'
           }
         };
 
-        return [contentTemplates[randomType]];
-      };
+        addEntry(historyEntry);
 
-      // Crear proyecto con el contenido generado
-      const projectData = {
-        title: selectedPodcast.title,
-        episodes: selectedPodcast.episodes?.length || 1,
-        subtitle: `Análisis: Contenido analizado sobre ${selectedPodcast.category}`,
-        duration: selectedEpisode?.duration || '00:00',
-        listeners: Math.floor(Math.random() * 1000) + 100, // Mock listeners
-        date: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' }),
-        podcastTitle: selectedPodcast.title,
-        podcastAuthor: selectedPodcast.author || 'Autor desconocido',
-        episodeTitle: selectedEpisode?.title,
-        generatedContent: generateMockContent()
-      };
+        // Enviar notificación de análisis completado
+        notifyAnalysisCompleted(selectedPodcast.title);
 
-      addProject(projectData);
+        // Generar contenido realista desde el store de contenido generado
+        const generateProjectContent = async () => {
+          const { generateContent, currentContent } = useGeneratedContentStore.getState();
 
-      // Enviar notificación de proyecto creado
-      notifyProjectCreated(selectedPodcast.title);
+          // Seleccionar aleatoriamente un tipo de contenido coherente
+          const contentTypes = ['texto', 'imagenes', 'videos', 'gif', 'infografias', 'presentaciones'] as const;
+          const randomContentType = contentTypes[Math.floor(Math.random() * contentTypes.length)];
 
-      setTimeout(() => {
-        router.push('/selecciones/podcast');
-      }, 500); // Pequeña pausa para que se vea que terminó
+          // Definir tono y estilo basados en categoría del podcast
+          const toneByCategory: Record<string, string> = {
+            tecnologia: 'profesional',
+            marketing: 'amigable',
+            emprendimiento: 'casual',
+          };
+          const tone = toneByCategory[selectedPodcast.category] || 'amigable';
+          const style = 'educativos';
+
+          await generateContent(randomContentType, tone, style);
+
+          // Obtener el contenido recién generado (se agrega al principio de la lista)
+          const generated = useGeneratedContentStore.getState().contents[0] || currentContent;
+
+          if (!generated) return [];
+
+          // Mapear tipos a los esperados por ProjectsStore
+          const typeMap: Record<string, string> = {
+            texto: 'text',
+            imagenes: 'image',
+            videos: 'video',
+            gif: 'gif',
+            infografias: 'infografia',
+            presentaciones: 'presentacion'
+          };
+
+          return [{
+            type: typeMap[generated.type] as any,
+            title: generated.title || generated.data?.title || 'Contenido generado',
+            content: generated.data?.content || generated.data?.images?.[0] || '',
+            thumbnail: generated.data?.thumbnail || undefined,
+            description: generated.data?.description || undefined,
+            slides: generated.data?.totalSlides || undefined,
+            format: generated.type === 'infografias' ? 'PDF' : generated.type === 'presentaciones' ? 'PPTX' : undefined,
+            tone,
+            style
+          }];
+        };
+
+        const generatedContent = await generateProjectContent();
+
+        // Crear proyecto con el contenido generado
+        const projectData = {
+          title: selectedPodcast.title,
+          episodes: selectedPodcast.episodes?.length || 1,
+          subtitle: `Análisis: Contenido analizado sobre ${selectedPodcast.category}`,
+          duration: selectedEpisode?.duration || '00:00',
+          listeners: Math.floor(Math.random() * 1000) + 100, // Mock listeners
+          date: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' }),
+          podcastTitle: selectedPodcast.title,
+          podcastAuthor: selectedPodcast.author || 'Autor desconocido',
+          episodeTitle: selectedEpisode?.title,
+          generatedContent
+        };
+
+        addProject(projectData);
+
+        // Enviar notificación de proyecto creado
+        notifyProjectCreated(selectedPodcast.title);
+
+        setTimeout(() => {
+          router.push('/selecciones/podcast');
+        }, 500); // Pequeña pausa para que se vea que terminó
+      })();
     }
   }, [currentAnalysis, isAnalyzing, showAnalysisView, selectedPodcast, selectedEpisode, router, addEntry, addProject]);
 
@@ -303,7 +300,7 @@ export function PodcastSelection() {
     };
 
     return (
-      <div className="flex items-center justify-center space-x-2 mt-8">
+      <div className="flex items-center justify-center space-x-2 w-full">
         <Button
           variant="outline"
           size="sm"
@@ -383,7 +380,7 @@ export function PodcastSelection() {
           
           {/* Vista de Análisis Detallado */}
           {showAnalysisView && selectedPodcast ? (
-            <div className="space-y-6">
+            <div className="flex-1 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-8 space-y-6">
               {/* Header */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
@@ -401,24 +398,26 @@ export function PodcastSelection() {
               </div>
 
               {/* Análisis en progreso */}
-              <div className="text-center py-12">
-                <div className="w-24 h-24 bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
-                </div>
-                
-                <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-                  {selectedPodcast.title}
-                </h2>
-                
-                <div className="space-y-4">
-                  <p className="text-gray-600">Analizando podcast...</p>
-                  <div className="w-full max-w-md mx-auto bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${analysisProgress}%` }}
-                    ></div>
+              <div className="flex-1 flex items-center justify-center">
+                <div className="text-center py-12">
+                  <div className="w-24 h-24 bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
                   </div>
-                  <p className="text-sm text-gray-500">{analysisProgress}% completado</p>
+                  
+                  <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+                    {selectedPodcast.title}
+                  </h2>
+                  
+                  <div className="space-y-4">
+                    <p className="text-gray-600">Analizando podcast...</p>
+                    <div className="w-full max-w-md mx-auto bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${analysisProgress}%` }}
+                      ></div>
+                    </div>
+                    <p className="text-sm text-gray-500">{analysisProgress}% completado</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -803,7 +802,7 @@ export function PodcastSelection() {
               )}
 
               {/* Fixed Pagination at Bottom */}
-              <div className="mt-8 pt-6 border-t border-gray-200 bg-white rounded-lg shadow-sm">
+              <div className="mt-8 pt-6 flex justify-center">
                 <PaginationComponent
                   currentPage={currentPodcastPage}
                   totalPages={totalPodcastPages}

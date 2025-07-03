@@ -71,7 +71,7 @@ export default function ScriptsPage() {
         <div className="px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between space-y-4 lg:space-y-0 mb-6">
             <div className="flex items-center space-x-4">
-              <Link href="/content" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+              <Link href="/dashboard" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
                 <ArrowLeft className="w-5 h-5 text-gray-600" />
               </Link>
               <div>
@@ -85,7 +85,7 @@ export default function ScriptsPage() {
             </div>
 
             <div className="flex items-center space-x-3">
-              <Link href="/content">
+              <Link href="/dashboard">
                 <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white">
                   <Video className="w-4 h-4 mr-2" />
                   Crear Nuevo
@@ -272,7 +272,7 @@ export default function ScriptsPage() {
                 }
               </p>
               {!searchQuery && (
-                <Link href="/content">
+                <Link href="/dashboard">
                   <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white">
                     <Video className="w-4 h-4 mr-2" />
                     Crear Primer Guión

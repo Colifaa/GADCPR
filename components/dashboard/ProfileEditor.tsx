@@ -5,13 +5,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useAuthStore } from '@/store/auth';
+import { useSupportStore } from '@/store/support';
 import { useToast } from '@/hooks/use-toast';
 import { toast as sonnerToast } from 'sonner';
-import { Camera, Edit2, Eye, EyeOff, Headphones, ChevronDown, ChevronUp, Calendar, CreditCard, Globe, Crown, Heart, Settings } from 'lucide-react';
+import { Camera, Edit2, Eye, EyeOff, Headphones, ChevronDown, ChevronUp, Calendar, CreditCard, Globe, Crown, Heart, Settings, Plus, Send, MessageCircle, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
+import { format } from 'date-fns';
 
 interface ProfileData {
   name: string;
@@ -28,6 +31,7 @@ interface ProfileData {
 
 export function ProfileEditor() {
   const { user, updateProfile, changePassword, updateSubscription } = useAuthStore();
+  const { contactRequests, submitContactRequest, getRequestsByUserId, isSubmitting } = useSupportStore();
   const { toast } = useToast();
   
   const [profileData, setProfileData] = useState<ProfileData>({
@@ -54,6 +58,12 @@ export function ProfileEditor() {
   const [showConstructionModal, setShowConstructionModal] = useState(false);
   const [showVersionModal, setShowVersionModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showSupportDialog, setShowSupportDialog] = useState(false);
+  const [supportForm, setSupportForm] = useState({
+    type: 'general_consultation' as 'technical_problem' | 'configuration_assistance' | 'general_consultation',
+    subject: '',
+    message: ''
+  });
 
   // Datos de FAQ
   const faqData = [
@@ -78,6 +88,11 @@ export function ProfileEditor() {
       answer: "Para cambiar tu contraseña en nuestra plataforma, debes de realizarlo al iniciar la sesión."
     }
   ];
+
+  // Obtener solicitudes del usuario actual
+  const userRequests = user?.id ? getRequestsByUserId(user.id) : [];
+  const pendingRequests = userRequests.filter(req => req.status === 'pending');
+  const respondedRequests = userRequests.filter(req => req.status === 'responded');
 
   // Función para manejar la expansión de FAQ
   const toggleFAQ = (id: number) => {
@@ -271,6 +286,73 @@ export function ProfileEditor() {
       .slice(0, 2);
   };
 
+  const handleSubmitSupportRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!user?.id) {
+      sonnerToast.error('Error', { description: 'Usuario no identificado' });
+      return;
+    }
+
+    if (!supportForm.subject.trim() || !supportForm.message.trim()) {
+      sonnerToast.error('Error', { description: 'Por favor completa todos los campos' });
+      return;
+    }
+
+    try {
+      await submitContactRequest({
+        userId: user.id,
+        name: user.name || 'Usuario',
+        email: user.email || '',
+        phone: user.phone,
+        type: supportForm.type,
+        subject: supportForm.subject,
+        message: supportForm.message
+      });
+
+      sonnerToast.success('Solicitud enviada', {
+        description: 'Tu solicitud de servicio técnico ha sido enviada correctamente'
+      });
+
+      setSupportForm({
+        type: 'general_consultation',
+        subject: '',
+        message: ''
+      });
+      setShowSupportDialog(false);
+    } catch (error) {
+      sonnerToast.error('Error', {
+        description: 'No se pudo enviar la solicitud. Inténtalo de nuevo.'
+      });
+    }
+  };
+
+  const getSupportTypeLabel = (type: string) => {
+    switch (type) {
+      case 'technical_problem':
+        return 'Problema técnico';
+      case 'configuration_assistance':
+        return 'Asistencia en la configuración';
+      case 'general_consultation':
+        return 'Consulta general';
+      default:
+        return type;
+    }
+  };
+
+  const getSupportTypeIcon = (type: string) => {
+    switch (type) {
+      case 'technical_problem':
+        return <AlertTriangle className="w-4 h-4 text-red-500" />;
+      case 'configuration_assistance':
+        return <Settings className="w-4 h-4 text-blue-500" />;
+      case 'general_consultation':
+        return <MessageCircle className="w-4 h-4 text-green-500" />;
+      default:
+        return <MessageCircle className="w-4 h-4 text-gray-500" />;
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6">
       <div className="flex flex-col lg:flex-row items-start gap-6 lg:gap-8">
@@ -433,7 +515,7 @@ export function ProfileEditor() {
         {/* Contenido Principal con Pestañas */}
         <div className="flex-1">
           <Tabs defaultValue="datos" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 bg-gray-100 p-1 rounded-lg">
+            <TabsList className="grid w-full grid-cols-4 bg-gray-100 p-1 rounded-lg">
               <TabsTrigger 
                 value="datos" 
                 className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-xs sm:text-sm"
@@ -445,6 +527,12 @@ export function ProfileEditor() {
                 className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-xs sm:text-sm"
               >
                 Servicio Técnico
+              </TabsTrigger>
+              <TabsTrigger 
+                value="solicitudes" 
+                className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-xs sm:text-sm"
+              >
+                Solicitudes
               </TabsTrigger>
               <TabsTrigger 
                 value="suscripciones" 
@@ -614,7 +702,8 @@ export function ProfileEditor() {
             <TabsContent value="servicio" className="mt-6">
               <div className="bg-white rounded-lg p-6 shadow-sm border">
                 {/* Header con icono */}
-                <div className="flex items-center mb-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center">
                   <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
                     <Headphones className="w-6 h-6 text-blue-600" />
                   </div>
@@ -622,6 +711,14 @@ export function ProfileEditor() {
                     <h3 className="text-xl font-semibold text-gray-900">Preguntas frecuentes</h3>
                     <p className="text-gray-600 text-sm">Encuentra respuestas a las dudas más comunes</p>
                   </div>
+                  </div>
+                  <Button 
+                    onClick={() => setShowSupportDialog(true)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Crear Solicitud
+                  </Button>
                 </div>
 
                 {/* Lista de FAQ */}
@@ -660,7 +757,170 @@ export function ProfileEditor() {
               </div>
             </TabsContent>
 
+            <TabsContent value="solicitudes" className="mt-6">
+              <div className="bg-white rounded-lg p-6 shadow-sm border">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center">
+                    <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
+                      <MessageCircle className="w-6 h-6 text-purple-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-semibold text-gray-900">Mis Solicitudes</h3>
+                      <p className="text-gray-600 text-sm">Gestiona tus solicitudes de servicio técnico</p>
+                    </div>
+                  </div>
+                  <Button 
+                    onClick={() => setShowSupportDialog(true)}
+                    className="bg-purple-600 hover:bg-purple-700 text-white"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Nueva Solicitud
+                  </Button>
+                </div>
 
+                {/* Estadísticas */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  <Card className="bg-gradient-to-r from-orange-50 to-orange-100 border-0">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-orange-600 font-medium">Pendientes</p>
+                          <p className="text-2xl font-bold text-orange-700">{pendingRequests.length}</p>
+                        </div>
+                        <Clock className="w-8 h-8 text-orange-600" />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-gradient-to-r from-green-50 to-green-100 border-0">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-green-600 font-medium">Respondidas</p>
+                          <p className="text-2xl font-bold text-green-700">{respondedRequests.length}</p>
+                        </div>
+                        <CheckCircle className="w-8 h-8 text-green-600" />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-gradient-to-r from-blue-50 to-blue-100 border-0">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-blue-600 font-medium">Total</p>
+                          <p className="text-2xl font-bold text-blue-700">{userRequests.length}</p>
+                        </div>
+                        <MessageCircle className="w-8 h-8 text-blue-600" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Solicitudes Pendientes */}
+                <div className="space-y-6">
+                  <div>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                      <Clock className="w-5 h-5 text-orange-600 mr-2" />
+                      Solicitudes Pendientes ({pendingRequests.length})
+                    </h4>
+                    {pendingRequests.length === 0 ? (
+                      <Card className="bg-gray-50">
+                        <CardContent className="p-6 text-center">
+                          <Clock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                          <p className="text-gray-600">No tienes solicitudes pendientes</p>
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      <div className="space-y-4">
+                        {pendingRequests.map((request) => (
+                          <Card key={request.id} className="border-l-4 border-orange-400">
+                            <CardContent className="p-4">
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                  <div className="flex items-center space-x-3 mb-2">
+                                    {getSupportTypeIcon(request.type)}
+                                    <h5 className="font-semibold text-gray-900">{request.subject}</h5>
+                                    <Badge variant="secondary" className="bg-orange-100 text-orange-800">
+                                      {getSupportTypeLabel(request.type)}
+                                    </Badge>
+                                  </div>
+                                  <p className="text-gray-600 text-sm mb-2">{request.message}</p>
+                                  <p className="text-xs text-gray-500">
+                                    Creado: {format(request.createdAt, 'dd/MM/yyyy HH:mm')}
+                                  </p>
+                                </div>
+                                <Badge className="bg-orange-100 text-orange-800">
+                                  Pendiente
+                                </Badge>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Solicitudes Respondidas */}
+                  <div>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                      <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
+                      Solicitudes Respondidas ({respondedRequests.length})
+                    </h4>
+                    {respondedRequests.length === 0 ? (
+                      <Card className="bg-gray-50">
+                        <CardContent className="p-6 text-center">
+                          <CheckCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                          <p className="text-gray-600">No tienes solicitudes respondidas</p>
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      <div className="space-y-4">
+                        {respondedRequests.map((request) => (
+                          <Card key={request.id} className="border-l-4 border-green-400">
+                            <CardContent className="p-4">
+                              <div className="flex items-start justify-between mb-3">
+                                <div className="flex-1">
+                                  <div className="flex items-center space-x-3 mb-2">
+                                    {getSupportTypeIcon(request.type)}
+                                    <h5 className="font-semibold text-gray-900">{request.subject}</h5>
+                                    <Badge variant="secondary" className="bg-green-100 text-green-800">
+                                      {getSupportTypeLabel(request.type)}
+                                    </Badge>
+                                  </div>
+                                  <p className="text-gray-600 text-sm mb-2">{request.message}</p>
+                                  <p className="text-xs text-gray-500">
+                                    Creado: {format(request.createdAt, 'dd/MM/yyyy HH:mm')} | 
+                                    Respondido: {request.respondedAt ? format(request.respondedAt, 'dd/MM/yyyy HH:mm') : 'N/A'}
+                                  </p>
+                                </div>
+                                <Badge className="bg-green-100 text-green-800">
+                                  Respondida
+                                </Badge>
+                              </div>
+                              
+                              {/* Respuesta del Admin */}
+                              {request.adminResponse && (
+                                <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                  <div className="flex items-center mb-2">
+                                    <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center mr-2">
+                                      <span className="text-white text-xs font-bold">A</span>
+                                    </div>
+                                    <span className="text-sm font-medium text-blue-800">Respuesta del Administrador</span>
+                                  </div>
+                                  <p className="text-sm text-blue-700">{request.adminResponse}</p>
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
 
             <TabsContent value="suscripciones" className="mt-6">
               <div className="bg-white rounded-lg p-6 shadow-sm border">
@@ -1003,6 +1263,88 @@ export function ProfileEditor() {
                </Button>
              </div>
            </div>
+         </DialogContent>
+       </Dialog>
+
+               {/* Modal de Solicitud de Servicio */}
+        <Dialog open={showSupportDialog} onOpenChange={setShowSupportDialog}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="text-lg font-semibold text-gray-900">
+                Crear Solicitud de Servicio Técnico
+              </DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSubmitSupportRequest} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="type" className="text-sm font-medium text-gray-900">
+                  Tipo de Solicitud
+                </Label>
+                <select
+                  id="type"
+                  value={supportForm.type}
+                  onChange={(e) => setSupportForm(prev => ({ ...prev, type: e.target.value as 'technical_problem' | 'configuration_assistance' | 'general_consultation' }))}
+                  className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="technical_problem">Problema técnico</option>
+                  <option value="configuration_assistance">Asistencia en la configuración</option>
+                  <option value="general_consultation">Consulta general</option>
+                </select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="subject" className="text-sm font-medium text-gray-900">
+                  Asunto
+                </Label>
+                <Input
+                  id="subject"
+                  type="text"
+                  value={supportForm.subject}
+                  onChange={(e) => setSupportForm(prev => ({ ...prev, subject: e.target.value }))}
+                  className="bg-gray-50 border-gray-200"
+                  placeholder="Describe brevemente tu problema"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="message" className="text-sm font-medium text-gray-900">
+                  Mensaje
+                </Label>
+                <textarea
+                  id="message"
+                  value={supportForm.message}
+                  onChange={(e) => setSupportForm(prev => ({ ...prev, message: e.target.value }))}
+                  className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[100px]"
+                  placeholder="Describe detalladamente tu problema o consulta"
+                />
+              </div>
+              
+              <div className="flex justify-end space-x-3 pt-4">
+                <Button 
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowSupportDialog(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                      Enviando...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4 mr-2" />
+                      Enviar Solicitud
+                    </>
+                  )}
+                </Button>
+              </div>
+            </form>
          </DialogContent>
        </Dialog>
     </div>

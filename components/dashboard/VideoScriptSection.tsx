@@ -23,6 +23,9 @@ import {
 } from 'lucide-react';
 import { useVideoScriptsStore } from '@/store/video-scripts';
 import { useProjectsStore } from '@/store/projects';
+import { usePodcastStore } from '@/store/podcasts';
+import { usePodcastAnalysisStore } from '@/store/podcastanalysis';
+import { useScriptTemplateStore, ToneKey, StyleKey, FocusKey } from '@/store/script-templates';
 
 // Componente de loader animado
 const AILoader = () => (
@@ -46,6 +49,9 @@ export function VideoScriptSection() {
   const router = useRouter();
   const { addScript } = useVideoScriptsStore();
   const { projects, linkContentToProject } = useProjectsStore();
+  const { selectedPodcast } = usePodcastStore();
+  const { currentAnalysis, analysisHistory } = usePodcastAnalysisStore();
+  const { introTemplates, headerTemplates, bulletPrefixes, closingTemplates, focusDetails } = useScriptTemplateStore.getState();
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedScript, setGeneratedScript] = useState('');
   const [showResult, setShowResult] = useState(false);
@@ -53,14 +59,27 @@ export function VideoScriptSection() {
   const [selectedTone, setSelectedTone] = useState('');
   const [selectedStyle, setSelectedStyle] = useState('');
   const [selectedFocus, setSelectedFocus] = useState('');
-  const [podcastAnalysis, setPodcastAnalysis] = useState('');
+  const analysisSource = currentAnalysis || analysisHistory?.[0];
+  const defaultAnalysis = analysisSource ? (() => {
+    const insights = analysisSource.keyInsights.slice(0,4).map(i => `• ${i}`).join('\n');
+    const topics = analysisSource.topicAnalysis.slice(0,4).map(t=> `• ${t.name}`).join('\n');
+    return `Insights clave:\n${insights}\n\nTemas principales:\n${topics}`;
+  })() : '';
+  const [podcastAnalysis, setPodcastAnalysis] = useState(defaultAnalysis);
 
   const toneOptions = [
     { value: 'conversacional', label: 'Conversacional', emoji: '💬', description: 'Estilo de podcast natural' },
     { value: 'profesional', label: 'Profesional', emoji: '💼', description: 'Serio y corporativo' },
     { value: 'dinamico', label: 'Dinámico', emoji: '⚡', description: 'Energético y atractivo' },
     { value: 'educativo', label: 'Educativo', emoji: '🎓', description: 'Enfoque didáctico' },
-    { value: 'entretenido', label: 'Entretenido', emoji: '🎉', description: 'Divertido y ligero' }
+    { value: 'entretenido', label: 'Entretenido', emoji: '🎉', description: 'Divertido y ligero' },
+    { value: 'inspirador', label: 'Inspirador', emoji: '✨', description: 'Motivacional y transformador' },
+    { value: 'analitico', label: 'Analítico', emoji: '🔍', description: 'Basado en datos y análisis' },
+    { value: 'casual', label: 'Casual', emoji: '😎', description: 'Relajado y sin protocolos' },
+    { value: 'energico', label: 'Enérgico', emoji: '🔥', description: 'Alto impacto y dinamismo' },
+    { value: 'reflexivo', label: 'Reflexivo', emoji: '🤔', description: 'Contemplativo y profundo' },
+    { value: 'humoristico', label: 'Humorístico', emoji: '😂', description: 'Con humor y entretenimiento' },
+    { value: 'emprendedor', label: 'Emprendedor', emoji: '🚀', description: 'Mentalidad de negocios' }
   ];
 
   const styleOptions = [
@@ -69,7 +88,15 @@ export function VideoScriptSection() {
     { value: 'analisis', label: 'Análisis', emoji: '🔍', description: 'Profundización en temas' },
     { value: 'tutorial', label: 'Tutorial', emoji: '🎯', description: 'Enseñanza paso a paso' },
     { value: 'debate', label: 'Debate', emoji: '💭', description: 'Diferentes perspectivas' },
-    { value: 'entrevista', label: 'Entrevista', emoji: '🎤', description: 'Formato Q&A' }
+    { value: 'entrevista', label: 'Entrevista', emoji: '🎤', description: 'Formato Q&A' },
+    { value: 'reseña', label: 'Reseña', emoji: '⭐', description: 'Evaluación crítica' },
+    { value: 'opinion', label: 'Opinión', emoji: '💬', description: 'Punto de vista personal' },
+    { value: 'caso-estudio', label: 'Caso de Estudio', emoji: '📊', description: 'Ejemplo práctico detallado' },
+    { value: 'top-lista', label: 'Top Lista', emoji: '🏆', description: 'Ranking de mejores opciones' },
+    { value: 'comparacion', label: 'Comparación', emoji: '⚖️', description: 'Análisis comparativo' },
+    { value: 'experiencia', label: 'Experiencia', emoji: '🎭', description: 'Vivencia personal' },
+    { value: 'tendencias', label: 'Tendencias', emoji: '📈', description: 'Futuro del sector' },
+    { value: 'predicciones', label: 'Predicciones', emoji: '🔮', description: 'Proyecciones futuras' }
   ];
 
   const focusOptions = [
@@ -78,7 +105,15 @@ export function VideoScriptSection() {
     { value: 'takeaways', label: 'Takeaways', emoji: '✅', description: 'Lecciones aprendidas' },
     { value: 'behind-scenes', label: 'Behind the Scenes', emoji: '🎬', description: 'Contexto adicional' },
     { value: 'reaction', label: 'Reacciones', emoji: '😮', description: 'Respuestas y opiniones' },
-    { value: 'extension', label: 'Extensión', emoji: '🔄', description: 'Continuación del tema' }
+    { value: 'extension', label: 'Extensión', emoji: '🔄', description: 'Continuación del tema' },
+    { value: 'estadisticas', label: 'Estadísticas', emoji: '📊', description: 'Datos y números clave' },
+    { value: 'consejos', label: 'Consejos', emoji: '💡', description: 'Tips y recomendaciones' },
+    { value: 'recursos', label: 'Recursos', emoji: '📚', description: 'Herramientas y referencias' },
+    { value: 'herramientas', label: 'Herramientas', emoji: '🛠️', description: 'Software y aplicaciones' },
+    { value: 'testimonios', label: 'Testimonios', emoji: '👥', description: 'Experiencias reales' },
+    { value: 'controversias', label: 'Controversias', emoji: '🔥', description: 'Temas polémicos' },
+    { value: 'metodologia', label: 'Metodología', emoji: '📋', description: 'Procesos y frameworks' },
+    { value: 'casos-exito', label: 'Casos de Éxito', emoji: '🏆', description: 'Historias ganadoras' }
   ];
 
   const handleGenerate = async () => {
@@ -92,7 +127,7 @@ export function VideoScriptSection() {
     await new Promise(resolve => setTimeout(resolve, 3000));
     
     // Generar contenido mockeado basado en las selecciones
-    const mockScript = generateMockScript(selectedTone, selectedStyle, selectedFocus, podcastAnalysis);
+    const { scriptText: mockScript, estDuration } = generateMockScript(selectedTone as StyleKey, selectedStyle as StyleKey, selectedFocus as FocusKey, podcastAnalysis);
     
     // Crear el guión en el store
     const newScript = {
@@ -101,8 +136,11 @@ export function VideoScriptSection() {
       tone: selectedTone,
       style: selectedStyle,
       focus: selectedFocus,
-      duration: '3-5 min',
-      status: 'completed' as const
+      duration: estDuration,
+      status: 'completed' as const,
+      podcastId: selectedPodcast?.id,
+      podcastTitle: selectedPodcast?.title,
+      category: selectedPodcast?.category
     };
     
     addScript(newScript);
@@ -123,32 +161,72 @@ export function VideoScriptSection() {
   };
 
   const generateMockScript = (tone: string, style: string, focus: string, analysis: string) => {
-    const introVariations = {
-      conversacional: '¡Hola! Acabo de escuchar un podcast increíble y quería compartir contigo',
-      profesional: 'En el podcast de hoy hemos analizado',
-      dinamico: '¡Esto es lo que NO te puedes perder del último podcast sobre',
-      educativo: 'En este video vamos a explorar los conceptos clave del podcast sobre',
-      entretenido: '¿Sabías que en el último podcast descubrí algo que me voló la mente?'
+    // Duraciones estimadas por estilo (min, max en minutos)
+    const durationRanges: Record<StyleKey, [number, number]> = {
+      resumen: [1, 2],
+      storytelling: [4, 6],
+      analisis: [5, 7],
+      tutorial: [6, 8],
+      debate: [4, 6],
+      entrevista: [4, 6],
+      reseña: [3, 5],
+      opinion: [2, 4],
+      'caso-estudio': [6, 8],
+      'top-lista': [3, 5],
+      comparacion: [4, 6],
+      experiencia: [3, 5],
+      tendencias: [5, 7],
+      predicciones: [4, 6]
     };
 
-    const development = `${analysis}
+    const randDuration = (min: number, max: number) => {
+      const value = Math.floor(Math.random() * (max - min + 1)) + min;
+      return `${value} min`;
+    };
 
-[DESARROLLO DEL CONTENIDO]
-• Contexto del podcast y por qué es relevante
-• Puntos principales extraídos del análisis
-• Ejemplos específicos y casos mencionados
-• Conexiones con tendencias actuales
-• Aplicaciones prácticas de los conceptos
+    const pickRandom = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
 
-[LLAMADA A LA ACCIÓN]
-Si te gustó este contenido basado en el podcast, no olvides suscribirte y déjame saber en los comentarios qué otros podcasts te gustaría que analice.`;
+    const intro = pickRandom(introTemplates[tone as ToneKey] || introTemplates.conversacional);
+    const header = pickRandom(headerTemplates[style as StyleKey] || headerTemplates.resumen);
+    const bulletPrefixArr = bulletPrefixes[focus as FocusKey] || ['•'];
+    const bulletPrefix = pickRandom(bulletPrefixArr);
 
-    return `[INTRO - 0:00-0:20]
-${introVariations[tone as keyof typeof introVariations]} ${analysis.slice(0, 100)}...
+    // Parse analysis text into sections
+    const lines = analysis.split('\n').map(l=>l.trim()).filter(Boolean);
+    const insightsArr: string[] = [];
+    const topicsArr: string[] = [];
+    let currentSection: 'insights' | 'topics' | null = null;
+    lines.forEach(l=>{
+      const lower = l.toLowerCase();
+      if(lower.startsWith('insights clave')) { currentSection='insights'; return; }
+      if(lower.startsWith('temas principales')) { currentSection='topics'; return; }
+      if(currentSection==='insights' && l.startsWith('•')) insightsArr.push(l.slice(1).trim());
+      else if(currentSection==='topics' && l.startsWith('•')) topicsArr.push(l.slice(1).trim());
+    });
 
-${development}
+    // Fallback if arrays empty
+    const combined = insightsArr.concat(topicsArr);
+    const useLines = combined.length ? combined : lines;
+    const limit = style === 'resumen' ? 3 : 6;
+    const bullets = useLines.slice(0,limit);
+    const bulletLines = bullets.map(b=>`${bulletPrefix} ${b}`);
 
- [DURACIÓN ESTIMADA: 3-5 minutos]`;
+    const focusDetailArr = focusDetails[focus as FocusKey] || [];
+    const focusDetail = focusDetailArr.length ? `\n\n${pickRandom(focusDetailArr)}` : '';
+
+    const closing = pickRandom(closingTemplates);
+
+    const estDuration = randDuration(...durationRanges[style as StyleKey]);
+
+    const scriptText = `${intro} ${bullets[0] || 'el tema del día'}.
+
+${header}
+${bulletLines.join('\n')}${focusDetail}
+
+[CIERRE]
+${closing}`;
+
+    return { scriptText, estDuration };
   };
 
   const handleBack = () => {
@@ -393,6 +471,11 @@ ${development}
               onChange={(e) => setPodcastAnalysis(e.target.value)}
               className="min-h-[150px] bg-white/80 border-gray-200 focus:border-purple-300 focus:ring-purple-200 resize-none"
             />
+            {analysisSource && (
+              <Button variant="secondary" size="sm" className="mt-2" onClick={() => setPodcastAnalysis(defaultAnalysis)}>
+                Usar análisis del podcast
+              </Button>
+            )}
             <div className="flex items-center justify-between mt-3 text-sm text-gray-500">
               <span>Información extraída del podcast para crear el guión</span>
               <span>{podcastAnalysis.length}/2000</span>

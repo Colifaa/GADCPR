@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 
 export interface ContactRequest {
   id: string;
+  userId?: string;
   name: string;
   email: string;
   phone?: string;
@@ -21,6 +22,7 @@ interface SupportState {
   isSubmitting: boolean;
   submitContactRequest: (request: Omit<ContactRequest, 'id' | 'status' | 'createdAt'>) => Promise<void>;
   getRequestById: (id: string) => ContactRequest | undefined;
+  getRequestsByUserId: (userId: string) => ContactRequest[];
   respondToContactRequest: (requestId: string, response: string, adminId: string) => void;
 }
 
@@ -51,6 +53,10 @@ export const useSupportStore = create<SupportState>()(
 
       getRequestById: (id: string) => {
         return get().contactRequests.find(request => request.id === id);
+      },
+
+      getRequestsByUserId: (userId: string) => {
+        return get().contactRequests.filter(request => request.userId === userId);
       },
 
       respondToContactRequest: (requestId: string, response: string, adminId: string) => {

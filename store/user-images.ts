@@ -67,45 +67,8 @@ export const useUserImagesStore = create<UserImagesStore>()(
       },
 
       addSuggestedImages: () => {
-        const suggestedImages = [
-          {
-            id: 'suggested-1',
-            name: 'Landing 1',
-            url: '/images/landing/landing.png',
-            type: 'image/png',
-            size: 0,
-            uploadedAt: new Date().toISOString(),
-            isSuggested: true
-          },
-          {
-            id: 'suggested-2',
-            name: 'Landing 2',
-            url: '/images/landing/landing2.png',
-            type: 'image/png',
-            size: 0,
-            uploadedAt: new Date().toISOString(),
-            isSuggested: true
-          },
-          {
-            id: 'suggested-3',
-            name: 'Landing 3',
-            url: '/images/landing/landing3.png',
-            type: 'image/png',
-            size: 0,
-            uploadedAt: new Date().toISOString(),
-            isSuggested: true
-          }
-        ];
-
-        set((state) => {
-          // Solo agregar las que no existan ya
-          const existingIds = state.images.map(img => img.id);
-          const newSuggested = suggestedImages.filter(img => !existingIds.includes(img.id));
-          
-          return {
-            images: [...state.images, ...newSuggested]
-          }
-        })
+        // Ya no agregamos imágenes sugeridas por defecto para permitir que Unsplash o el usuario provean imágenes.
+        // Esta función se mantiene por compatibilidad, pero ahora no realiza cambios.
       },
 
       getSuggestedImages: () => {
@@ -139,40 +102,8 @@ export const useUserImagesStore = create<UserImagesStore>()(
       },
 
       resetToDefaultImages: () => {
-        // Eliminar todas las imágenes y agregar solo las por defecto
+        // Antes se restauraban las 3 imágenes por defecto. Ahora simplemente se eliminan todas.
         set({ images: [] });
-        
-        const suggestedImages = [
-          {
-            id: 'suggested-1',
-            name: 'Landing 1',
-            url: '/images/landing/landing.png',
-            type: 'image/png',
-            size: 0,
-            uploadedAt: new Date().toISOString(),
-            isSuggested: true
-          },
-          {
-            id: 'suggested-2',
-            name: 'Landing 2',
-            url: '/images/landing/landing2.png',
-            type: 'image/png',
-            size: 0,
-            uploadedAt: new Date().toISOString(),
-            isSuggested: true
-          },
-          {
-            id: 'suggested-3',
-            name: 'Landing 3',
-            url: '/images/landing/landing3.png',
-            type: 'image/png',
-            size: 0,
-            uploadedAt: new Date().toISOString(),
-            isSuggested: true
-          }
-        ];
-
-        set({ images: suggestedImages });
       },
     }),
     {

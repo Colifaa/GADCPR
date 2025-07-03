@@ -23,9 +23,9 @@ export default function ScriptViewPage() {
           <div className="text-center py-12">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">Guión no encontrado</h1>
             <p className="text-gray-600 mb-6">El guión que buscas no existe o ha sido eliminado.</p>
-            <Button onClick={() => router.push('/generated-content/scripts')}>
+            <Button onClick={() => router.push('/selecciones/podcast/contents')}>
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Volver a Guiones
+              Volver
             </Button>
           </div>
         </div>
@@ -90,11 +90,11 @@ export default function ScriptViewPage() {
         <div className="flex items-center justify-between mb-6">
           <Button
             variant="ghost"
-            onClick={() => router.push('/generated-content/scripts')}
+            onClick={() => router.push('/selecciones/podcast/contents')}
             className="flex items-center space-x-2 hover:bg-purple-50"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Volver a Guiones</span>
+            <span>Volver</span>
           </Button>
           
           <div className="flex items-center space-x-2">

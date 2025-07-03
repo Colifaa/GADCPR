@@ -89,7 +89,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <NavbarUser />
         
         {/* Contenido principal */}
-        <main className="flex-1 w-full">
+        <main className="flex-1 w-full bg-gradient-to-br from-gray-50 to-gray-100">
           {children}
         </main>
       </div>

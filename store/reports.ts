@@ -610,11 +610,11 @@ export const useReportsStore = create<ReportsState>((set, get) => ({
 
         try {
           const canvas = await html2canvas(container, {
-            backgroundColor: '#ffffff',
+            background: '#ffffff',
             scale: 2,
             logging: false,
             useCORS: true
-          });
+          } as any);
 
           document.body.removeChild(container);
 

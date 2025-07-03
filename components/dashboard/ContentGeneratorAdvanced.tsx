@@ -677,8 +677,8 @@ export function ContentGeneratorAdvanced() {
                       {userImages.length === 0 && (
                         <div className="col-span-3 text-center py-8 text-gray-500">
                           <ImageIcon className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                          <p className="text-sm mb-2">Cargando imágenes por defecto...</p>
-                          <p className="text-xs text-gray-400">Las 3 imágenes de ejemplo aparecerán automáticamente</p>
+                          <p className="text-sm mb-2">No hay imágenes cargadas</p>
+                          <p className="text-xs text-gray-400">Arrastra imágenes aquí o usa el botón "Agregar"</p>
                           {isDragOver && (
                             <p className="text-xs text-blue-600 mt-2 font-medium">¡Suelta las imágenes aquí!</p>
                           )}
